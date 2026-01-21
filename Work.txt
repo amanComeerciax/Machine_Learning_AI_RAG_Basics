@@ -1,0 +1,49 @@
+Learn Machine Learning Basics Classification and Regression
+
+Data Collection and Preprocessing
+
+Data Visualization
+
+Machine Learning Models
+
+
+
+Retreival Augmented Generation (RAG)
+
+RAG Pipeline 
+
+
+There Are Two Pipelines
+
+1. Ingestion Pipeline
+
+Step:1 Data Sources Documents
+
+Step:2 Chunking  
+
+Step:3 Vector Embeddings
+
+Step:4 Create Vector Database
+
+2. Retreival Pipeline
+
+
+Step:1 Query
+
+Step:2 Vectorize Query
+
+Step:3 Retrieve Documents
+
+Step:4 Generate Response
+
+
+
+
+
+
+
+
+
+
+
+
