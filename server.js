@@ -307,11 +307,515 @@
 
 
 
+// import express from "express";
+// import cors from "cors";
+// import fs from "fs";
+// import multer from "multer";
+// import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+// import Groq from "groq-sdk";
+// import NodeCache from "node-cache";
+// import dotenv from "dotenv";
+// dotenv.config();
+
+// const app = express();
+// app.use(cors());
+// app.use(express.json());
+
+// const upload = multer({ dest: "uploads/" });
+// const cache = new NodeCache({ stdTTL: 600 }); // 10 min cache
+
+// // ✅ Groq Client
+// const groq = new Groq({
+//     apiKey: process.env.GROQ_API_KEY
+// });
+
+// let pdfContent = "";
+// let pdfChunks = [];
+
+// /* ===============================
+//    CHUNK TEXT FUNCTION
+// ================================ */
+// function chunkText(text, chunkSize = 2000) {
+//     const chunks = [];
+//     const sentences = text.split(/[.!?]+/);
+//     let currentChunk = "";
+
+//     for (const sentence of sentences) {
+//         if ((currentChunk + sentence).length < chunkSize) {
+//             currentChunk += sentence + ". ";
+//         } else {
+//             if (currentChunk) chunks.push(currentChunk.trim());
+//             currentChunk = sentence + ". ";
+//         }
+//     }
+
+//     if (currentChunk) chunks.push(currentChunk.trim());
+//     return chunks;
+// }
+
+// /* ===============================
+//    FIND RELEVANT CHUNKS
+// ================================ */
+// function findRelevantChunks(question, chunks, topK = 3) {
+//     // Simple keyword-based relevance (you can improve this)
+//     const questionWords = question.toLowerCase().split(/\s+/);
+
+//     const scored = chunks.map(chunk => {
+//         const chunkLower = chunk.toLowerCase();
+//         let score = 0;
+
+//         questionWords.forEach(word => {
+//             if (word.length > 3 && chunkLower.includes(word)) {
+//                 score++;
+//             }
+//         });
+
+//         return { chunk, score };
+//     });
+
+//     return scored
+//         .sort((a, b) => b.score - a.score)
+//         .slice(0, topK)
+//         .map(item => item.chunk);
+// }
+
+// /* ===============================
+//    PDF UPLOAD
+// ================================ */
+// app.post("/upload", upload.single("pdf"), async (req, res) => {
+//     try {
+//         if (!req.file) {
+//             return res.status(400).json({ error: "No PDF uploaded" });
+//         }
+
+//         console.log("📄 PDF uploaded:", req.file.originalname);
+
+//         const pdfBuffer = new Uint8Array(fs.readFileSync(req.file.path));
+//         const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+
+//         // Extract text from all pages
+//         const pagePromises = [];
+//         for (let i = 1; i <= pdf.numPages; i++) {
+//             pagePromises.push(
+//                 pdf.getPage(i).then(async (page) => {
+//                     const content = await page.getTextContent();
+//                     return content.items.map(it => it.str).join(" ");
+//                 })
+//             );
+//         }
+
+//         const pages = await Promise.all(pagePromises);
+//         const fullText = pages.join("\n\n");
+
+//         // Store content
+//         pdfContent = fullText;
+//         pdfChunks = chunkText(fullText);
+
+//         // Cleanup
+//         fs.unlinkSync(req.file.path);
+
+//         // Clear cache
+//         cache.flushAll();
+
+//         console.log(`✅ PDF processed: ${pdfChunks.length} chunks created`);
+
+//         res.json({
+//             message: "PDF indexed successfully",
+//             chunks: pdfChunks.length,
+//             pages: pdf.numPages
+//         });
+
+//     } catch (err) {
+//         console.error("❌ Upload error:", err);
+//         if (req.file && fs.existsSync(req.file.path)) {
+//             fs.unlinkSync(req.file.path);
+//         }
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+
+// /* ===============================
+//    ASK QUESTION (GROQ - FAST MODE)
+// ================================ */
+// app.post("/ask", async (req, res) => {
+//     try {
+//         const { question } = req.body;
+
+//         if (!question || question.trim().length === 0) {
+//             return res.status(400).json({ error: "Question is required" });
+//         }
+
+//         if (!pdfContent || pdfChunks.length === 0) {
+//             return res.status(400).json({
+//                 error: "No PDF uploaded yet. Please upload a PDF first."
+//             });
+//         }
+
+//         // Check cache
+//         const cacheKey = question.toLowerCase().trim();
+//         const cachedAnswer = cache.get(cacheKey);
+//         if (cachedAnswer) {
+//             console.log("💾 Returning cached answer");
+//             return res.json({
+//                 answer: cachedAnswer,
+//                 cached: true
+//             });
+//         }
+
+//         console.log("🔍 Question:", question);
+
+//         // Find relevant chunks
+//         const relevantChunks = findRelevantChunks(question, pdfChunks, 3);
+//         const context = relevantChunks.join("\n\n");
+
+//         console.log("📄 Using context:", context.substring(0, 100) + "...");
+
+//         // Call Groq API
+//         const startTime = Date.now();
+
+//         const completion = await groq.chat.completions.create({
+//             messages: [
+//                 {
+//                     role: "system",
+//                     content: "You are a helpful AI assistant. Answer questions based ONLY on the context provided from the PDF document. If the answer is not in the context, clearly state 'I don't have enough information to answer that question based on the provided document.' Keep answers concise and relevant."
+//                 },
+//                 {
+//                     role: "user",
+//                     content: `Context from PDF:\n${context}\n\nQuestion: ${question}\n\nProvide a clear and concise answer based only on the context above:`
+//                 }
+//             ],
+//             model: "llama-3.3-70b-versatile", // Fast and good quality
+//             temperature: 0.3,
+//             max_tokens: 1024,
+//             top_p: 1,
+//             stream: false
+//         });
+
+//         const answer = completion.choices[0].message.content;
+//         const responseTime = ((Date.now() - startTime) / 1000).toFixed(2);
+
+//         // Cache the answer
+//         cache.set(cacheKey, answer);
+
+//         console.log(`✅ Answer generated in ${responseTime}s`);
+
+//         res.json({
+//             answer: answer,
+//             cached: false,
+//             sources: relevantChunks.length,
+//             responseTime: responseTime + "s"
+//         });
+
+//     } catch (err) {
+//         console.error("❌ Ask error:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+
+// /* ===============================
+//    ASK QUESTION (STREAMING MODE)
+// ================================ */
+// app.post("/ask-stream", async (req, res) => {
+//     try {
+//         const { question } = req.body;
+
+//         if (!question || question.trim().length === 0) {
+//             return res.status(400).json({ error: "Question is required" });
+//         }
+
+//         // Set headers for SSE
+//         res.setHeader('Content-Type', 'text/event-stream');
+//         res.setHeader('Cache-Control', 'no-cache');
+//         res.setHeader('Connection', 'keep-alive');
+
+//         if (!pdfContent || pdfChunks.length === 0) {
+//             res.write(`data: ${JSON.stringify({ error: "No PDF uploaded" })}\n\n`);
+//             return res.end();
+//         }
+
+//         console.log("🌊 Streaming question:", question);
+
+//         // Find relevant chunks
+//         const relevantChunks = findRelevantChunks(question, pdfChunks, 3);
+//         const context = relevantChunks.join("\n\n");
+
+//         // Stream from Groq
+//         const stream = await groq.chat.completions.create({
+//             messages: [
+//                 {
+//                     role: "system",
+//                     content: "You are a helpful AI assistant. Answer based only on the context provided."
+//                 },
+//                 {
+//                     role: "user",
+//                     content: `Context:\n${context}\n\nQuestion: ${question}\n\nAnswer:`
+//                 }
+//             ],
+//             model: "llama-3.3-70b-versatile",
+//             temperature: 0.3,
+//             max_tokens: 1024,
+//             stream: true
+//         });
+
+//         for await (const chunk of stream) {
+//             const content = chunk.choices[0]?.delta?.content || '';
+//             if (content) {
+//                 res.write(`data: ${JSON.stringify({ content })}\n\n`);
+//             }
+//         }
+
+//         res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+//         res.end();
+
+//     } catch (err) {
+//         console.error("❌ Stream error:", err);
+//         res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+//         res.end();
+//     }
+// });
+
+// /* ===============================
+//    HEALTH CHECK
+// ================================ */
+// app.get("/health", (req, res) => {
+//     res.json({
+//         status: "ok",
+//         vectorStoreLoaded: pdfContent.length > 0,
+//         cacheSize: cache.keys().length,
+//         chunks: pdfChunks.length
+//     });
+// });
+
+// /* ===============================
+//    CLEAR CACHE
+// ================================ */
+// app.post("/clear-cache", (req, res) => {
+//     cache.flushAll();
+//     res.json({ message: "Cache cleared successfully" });
+// });
+
+// /* ===============================
+//    RESET (Clear PDF)
+// ================================ */
+// app.post("/reset", (req, res) => {
+//     pdfContent = "";
+//     pdfChunks = [];
+//     cache.flushAll();
+//     res.json({ message: "System reset successfully" });
+// });
+
+// /* ===============================
+//    START SERVER
+// ================================ */
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => {
+//     console.log(`🚀 Glamour PDF Server running on http://localhost:${PORT}`);
+//     console.log(`📊 Health check: http://localhost:${PORT}/health`);
+//     console.log(`⚡ Powered by Groq API`);
+// });
+
+
+
+// import express from "express";
+// import cors from "cors";
+// import fs from "fs";
+// import multer from "multer";
+// import { createRequire } from "module";
+// const require = createRequire(import.meta.url);
+// const pdf = require("pdf-parse");
+
+
+
+// import Groq from "groq-sdk";
+// import NodeCache from "node-cache";
+// import dotenv from "dotenv";
+// dotenv.config();
+
+// const app = express();
+// app.use(cors());
+// app.use(express.json());
+
+// const upload = multer({ dest: "uploads/" });
+// const cache = new NodeCache({ stdTTL: 600 }); // 10 min cache
+
+// /* ===============================
+//    GROQ CLIENT
+// ================================ */
+// const groq = new Groq({
+//     apiKey: process.env.GROQ_API_KEY
+// });
+
+// let pdfContent = "";
+// let pdfChunks = [];
+
+// /* ===============================
+//    CHUNK TEXT
+// ================================ */
+// function chunkText(text, chunkSize = 2000) {
+//     const chunks = [];
+//     const sentences = text.split(/[.!?]+/);
+//     let current = "";
+
+//     for (const s of sentences) {
+//         if ((current + s).length < chunkSize) {
+//             current += s + ". ";
+//         } else {
+//             chunks.push(current.trim());
+//             current = s + ". ";
+//         }
+//     }
+//     if (current) chunks.push(current.trim());
+//     return chunks;
+// }
+
+// /* ===============================
+//    SIMPLE RELEVANCE SEARCH
+// ================================ */
+// function findRelevantChunks(question, chunks, topK = 3) {
+//     const words = question.toLowerCase().split(/\s+/);
+
+//     return chunks
+//         .map(chunk => {
+//             let score = 0;
+//             const lower = chunk.toLowerCase();
+//             words.forEach(w => {
+//                 if (w.length > 3 && lower.includes(w)) score++;
+//             });
+//             return { chunk, score };
+//         })
+//         .sort((a, b) => b.score - a.score)
+//         .slice(0, topK)
+//         .map(i => i.chunk);
+// }
+
+// /* ===============================
+//    PDF UPLOAD (pdf-parse ONLY)
+// ================================ */
+// app.post("/upload", upload.single("pdf"), async (req, res) => {
+//     try {
+//         if (!req.file) {
+//             return res.status(400).json({ error: "No PDF uploaded" });
+//         }
+
+//         console.log("📄 PDF uploaded:", req.file.originalname);
+
+//         const buffer = fs.readFileSync(req.file.path);
+//         const data = await pdf(buffer);
+
+//         pdfContent = data.text;
+//         pdfChunks = chunkText(pdfContent);
+
+//         fs.unlinkSync(req.file.path);
+//         cache.flushAll();
+
+//         console.log(`✅ PDF processed: ${pdfChunks.length} chunks`);
+
+//         res.json({
+//             message: "PDF indexed successfully",
+//             pages: data.numpages,
+//             chunks: pdfChunks.length
+//         });
+
+//     } catch (err) {
+//         console.error("❌ Upload error:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+
+// /* ===============================
+//    ASK QUESTION (FAST MODE)
+// ================================ */
+// app.post("/ask", async (req, res) => {
+//     try {
+//         const { question } = req.body;
+
+//         if (!question) {
+//             return res.status(400).json({ error: "Question required" });
+//         }
+
+//         if (!pdfChunks.length) {
+//             return res.status(400).json({ error: "Upload a PDF first" });
+//         }
+
+//         const cacheKey = question.toLowerCase().trim();
+//         const cached = cache.get(cacheKey);
+//         if (cached) {
+//             return res.json({ answer: cached, cached: true });
+//         }
+
+//         const relevantChunks = findRelevantChunks(question, pdfChunks, 3);
+//         const context = relevantChunks.join("\n\n");
+
+//         const completion = await groq.chat.completions.create({
+//             model: "llama-3.3-70b-versatile",
+//             temperature: 0.3,
+//             max_tokens: 1024,
+//             messages: [
+//                 {
+//                     role: "system",
+//                     content:
+//                         "Answer ONLY from the provided PDF context. If answer is not present, say you don't know."
+//                 },
+//                 {
+//                     role: "user",
+//                     content: `Context:\n${context}\n\nQuestion: ${question}`
+//                 }
+//             ]
+//         });
+
+//         const answer = completion.choices[0].message.content;
+//         cache.set(cacheKey, answer);
+
+//         res.json({
+//             answer,
+//             cached: false,
+//             sources: relevantChunks.length
+//         });
+
+//     } catch (err) {
+//         console.error("❌ Ask error:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+
+// /* ===============================
+//    HEALTH CHECK
+// ================================ */
+// app.get("/health", (req, res) => {
+//     res.json({
+//         status: "ok",
+//         chunks: pdfChunks.length,
+//         cacheSize: cache.keys().length
+//     });
+// });
+
+// /* ===============================
+//    RESET
+// ================================ */
+// app.post("/reset", (req, res) => {
+//     pdfContent = "";
+//     pdfChunks = [];
+//     cache.flushAll();
+//     res.json({ message: "System reset" });
+// });
+
+// /* ===============================
+//    START SERVER
+// ================================ */
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => {
+//     console.log(`🚀 PDF RAG Server running on port ${PORT}`);
+// });
+
+
 import express from "express";
 import cors from "cors";
 import fs from "fs";
 import multer from "multer";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdf = require("pdf-parse");
+
 import Groq from "groq-sdk";
 import NodeCache from "node-cache";
 import dotenv from "dotenv";
@@ -324,7 +828,9 @@ app.use(express.json());
 const upload = multer({ dest: "uploads/" });
 const cache = new NodeCache({ stdTTL: 600 }); // 10 min cache
 
-// ✅ Groq Client
+/* ===============================
+   GROQ CLIENT
+================================ */
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
@@ -333,54 +839,47 @@ let pdfContent = "";
 let pdfChunks = [];
 
 /* ===============================
-   CHUNK TEXT FUNCTION
+   CHUNK TEXT
 ================================ */
 function chunkText(text, chunkSize = 2000) {
     const chunks = [];
     const sentences = text.split(/[.!?]+/);
-    let currentChunk = "";
+    let current = "";
 
-    for (const sentence of sentences) {
-        if ((currentChunk + sentence).length < chunkSize) {
-            currentChunk += sentence + ". ";
+    for (const s of sentences) {
+        if ((current + s).length < chunkSize) {
+            current += s + ". ";
         } else {
-            if (currentChunk) chunks.push(currentChunk.trim());
-            currentChunk = sentence + ". ";
+            chunks.push(current.trim());
+            current = s + ". ";
         }
     }
-
-    if (currentChunk) chunks.push(currentChunk.trim());
+    if (current) chunks.push(current.trim());
     return chunks;
 }
 
 /* ===============================
-   FIND RELEVANT CHUNKS
+   SIMPLE RELEVANCE SEARCH
 ================================ */
 function findRelevantChunks(question, chunks, topK = 3) {
-    // Simple keyword-based relevance (you can improve this)
-    const questionWords = question.toLowerCase().split(/\s+/);
+    const words = question.toLowerCase().split(/\s+/);
 
-    const scored = chunks.map(chunk => {
-        const chunkLower = chunk.toLowerCase();
-        let score = 0;
-
-        questionWords.forEach(word => {
-            if (word.length > 3 && chunkLower.includes(word)) {
-                score++;
-            }
-        });
-
-        return { chunk, score };
-    });
-
-    return scored
+    return chunks
+        .map(chunk => {
+            let score = 0;
+            const lower = chunk.toLowerCase();
+            words.forEach(w => {
+                if (w.length > 3 && lower.includes(w)) score++;
+            });
+            return { chunk, score };
+        })
         .sort((a, b) => b.score - a.score)
         .slice(0, topK)
-        .map(item => item.chunk);
+        .map(i => i.chunk);
 }
 
 /* ===============================
-   PDF UPLOAD
+   PDF UPLOAD (pdf-parse ONLY)
 ================================ */
 app.post("/upload", upload.single("pdf"), async (req, res) => {
     try {
@@ -390,120 +889,77 @@ app.post("/upload", upload.single("pdf"), async (req, res) => {
 
         console.log("📄 PDF uploaded:", req.file.originalname);
 
-        const pdfBuffer = new Uint8Array(fs.readFileSync(req.file.path));
-        const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+        const buffer = fs.readFileSync(req.file.path);
+        const data = await pdf(buffer);
 
-        // Extract text from all pages
-        const pagePromises = [];
-        for (let i = 1; i <= pdf.numPages; i++) {
-            pagePromises.push(
-                pdf.getPage(i).then(async (page) => {
-                    const content = await page.getTextContent();
-                    return content.items.map(it => it.str).join(" ");
-                })
-            );
-        }
+        pdfContent = data.text;
+        pdfChunks = chunkText(pdfContent);
 
-        const pages = await Promise.all(pagePromises);
-        const fullText = pages.join("\n\n");
-
-        // Store content
-        pdfContent = fullText;
-        pdfChunks = chunkText(fullText);
-
-        // Cleanup
         fs.unlinkSync(req.file.path);
-
-        // Clear cache
         cache.flushAll();
 
-        console.log(`✅ PDF processed: ${pdfChunks.length} chunks created`);
+        console.log(`✅ PDF processed: ${pdfChunks.length} chunks`);
 
         res.json({
             message: "PDF indexed successfully",
-            chunks: pdfChunks.length,
-            pages: pdf.numPages
+            pages: data.numpages,
+            chunks: pdfChunks.length
         });
 
     } catch (err) {
         console.error("❌ Upload error:", err);
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
         res.status(500).json({ error: err.message });
     }
 });
 
 /* ===============================
-   ASK QUESTION (GROQ - FAST MODE)
+   ASK QUESTION (FAST MODE)
 ================================ */
 app.post("/ask", async (req, res) => {
     try {
         const { question } = req.body;
 
-        if (!question || question.trim().length === 0) {
-            return res.status(400).json({ error: "Question is required" });
+        if (!question) {
+            return res.status(400).json({ error: "Question required" });
         }
 
-        if (!pdfContent || pdfChunks.length === 0) {
-            return res.status(400).json({
-                error: "No PDF uploaded yet. Please upload a PDF first."
-            });
+        if (!pdfChunks.length) {
+            return res.status(400).json({ error: "Upload a PDF first" });
         }
 
-        // Check cache
         const cacheKey = question.toLowerCase().trim();
-        const cachedAnswer = cache.get(cacheKey);
-        if (cachedAnswer) {
-            console.log("💾 Returning cached answer");
-            return res.json({
-                answer: cachedAnswer,
-                cached: true
-            });
+        const cached = cache.get(cacheKey);
+        if (cached) {
+            return res.json({ answer: cached, cached: true });
         }
 
-        console.log("🔍 Question:", question);
-
-        // Find relevant chunks
         const relevantChunks = findRelevantChunks(question, pdfChunks, 3);
         const context = relevantChunks.join("\n\n");
 
-        console.log("📄 Using context:", context.substring(0, 100) + "...");
-
-        // Call Groq API
-        const startTime = Date.now();
-
         const completion = await groq.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.3,
+            max_tokens: 1024,
             messages: [
                 {
                     role: "system",
-                    content: "You are a helpful AI assistant. Answer questions based ONLY on the context provided from the PDF document. If the answer is not in the context, clearly state 'I don't have enough information to answer that question based on the provided document.' Keep answers concise and relevant."
+                    content:
+                        "Answer ONLY from the provided PDF context. If answer is not present, say you don't know."
                 },
                 {
                     role: "user",
-                    content: `Context from PDF:\n${context}\n\nQuestion: ${question}\n\nProvide a clear and concise answer based only on the context above:`
+                    content: `Context:\n${context}\n\nQuestion: ${question}`
                 }
-            ],
-            model: "llama-3.3-70b-versatile", // Fast and good quality
-            temperature: 0.3,
-            max_tokens: 1024,
-            top_p: 1,
-            stream: false
+            ]
         });
 
         const answer = completion.choices[0].message.content;
-        const responseTime = ((Date.now() - startTime) / 1000).toFixed(2);
-
-        // Cache the answer
         cache.set(cacheKey, answer);
 
-        console.log(`✅ Answer generated in ${responseTime}s`);
-
         res.json({
-            answer: answer,
+            answer,
             cached: false,
-            sources: relevantChunks.length,
-            responseTime: responseTime + "s"
+            sources: relevantChunks.length
         });
 
     } catch (err) {
@@ -519,51 +975,56 @@ app.post("/ask-stream", async (req, res) => {
     try {
         const { question } = req.body;
 
-        if (!question || question.trim().length === 0) {
-            return res.status(400).json({ error: "Question is required" });
+        if (!question) {
+            return res.status(400).json({ error: "Question required" });
         }
 
-        // Set headers for SSE
+        if (!pdfChunks.length) {
+            return res.status(400).json({ error: "Upload a PDF first" });
+        }
+
+        // Set headers for SSE (Server-Sent Events)
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        if (!pdfContent || pdfChunks.length === 0) {
-            res.write(`data: ${JSON.stringify({ error: "No PDF uploaded" })}\n\n`);
-            return res.end();
-        }
-
-        console.log("🌊 Streaming question:", question);
-
-        // Find relevant chunks
         const relevantChunks = findRelevantChunks(question, pdfChunks, 3);
         const context = relevantChunks.join("\n\n");
 
-        // Stream from Groq
         const stream = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: "You are a helpful AI assistant. Answer based only on the context provided."
-                },
-                {
-                    role: "user",
-                    content: `Context:\n${context}\n\nQuestion: ${question}\n\nAnswer:`
-                }
-            ],
             model: "llama-3.3-70b-versatile",
             temperature: 0.3,
             max_tokens: 1024,
-            stream: true
+            stream: true,
+            messages: [
+                {
+                    role: "system",
+                    content:
+                        "Answer ONLY from the provided PDF context. If answer is not present, say you don't know."
+                },
+                {
+                    role: "user",
+                    content: `Context:\n${context}\n\nQuestion: ${question}`
+                }
+            ]
         });
 
+        let fullAnswer = "";
+
         for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content || '';
+            const content = chunk.choices[0]?.delta?.content || "";
             if (content) {
+                fullAnswer += content;
+                // Send the chunk to the client
                 res.write(`data: ${JSON.stringify({ content })}\n\n`);
             }
         }
 
+        // Cache the complete answer
+        const cacheKey = question.toLowerCase().trim();
+        cache.set(cacheKey, fullAnswer);
+
+        // Send completion signal
         res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
         res.end();
 
@@ -580,28 +1041,19 @@ app.post("/ask-stream", async (req, res) => {
 app.get("/health", (req, res) => {
     res.json({
         status: "ok",
-        vectorStoreLoaded: pdfContent.length > 0,
-        cacheSize: cache.keys().length,
-        chunks: pdfChunks.length
+        chunks: pdfChunks.length,
+        cacheSize: cache.keys().length
     });
 });
 
 /* ===============================
-   CLEAR CACHE
-================================ */
-app.post("/clear-cache", (req, res) => {
-    cache.flushAll();
-    res.json({ message: "Cache cleared successfully" });
-});
-
-/* ===============================
-   RESET (Clear PDF)
+   RESET
 ================================ */
 app.post("/reset", (req, res) => {
     pdfContent = "";
     pdfChunks = [];
     cache.flushAll();
-    res.json({ message: "System reset successfully" });
+    res.json({ message: "System reset" });
 });
 
 /* ===============================
@@ -609,7 +1061,11 @@ app.post("/reset", (req, res) => {
 ================================ */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Glamour PDF Server running on http://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
-    console.log(`⚡ Powered by Groq API`);
+    console.log(`🚀 PDF RAG Server running on port ${PORT}`);
+    console.log(`📡 Endpoints:`);
+    console.log(`   POST /upload - Upload PDF`);
+    console.log(`   POST /ask - Fast mode (no streaming)`);
+    console.log(`   POST /ask-stream - Streaming mode`);
+    console.log(`   POST /reset - Reset system`);
+    console.log(`   GET /health - Health check`);
 });
