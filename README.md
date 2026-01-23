@@ -1,132 +1,184 @@
+<h1 align="center">📄 Machine Learning AI – PDF RAG Chatbot</h1>
 
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/6c5886d2-9c0c-4ba0-b0d3-45fe7fc7b11b" />
+<p align="center">
+  <b>PDF-based AI Chatbot using RAG (Retrieval-Augmented Generation)</b><br/>
+  Built with Node.js, Groq LLM, and a custom retrieval pipeline
+</p>
 
-<!DOCTYPE html>
-<html lang="en">
-<header>
-  <h1>🤖 Local RAG System with Ollama</h1>
-  <p>
-    A simple, stable, and fully local <strong>Retrieval-Augmented Generation (RAG)</strong>
-    project built with <span class="highlight">Node.js</span> and
-    <span class="highlight">Ollama</span> — no OpenAI, no API keys.
-  </p>
-</header>
+<hr/>
 
-<section>
-  <h2>✨ Features</h2>
-  <ul>
-    <li>🧠 Local LLM using Ollama</li>
-    <li>📄 Context-based answering (RAG concept)</li>
-    <li>🚫 No hallucination – answers only from your data</li>
-    <li>🆓 100% Free & Offline</li>
-    <li>⚡ Lightweight & beginner-friendly</li>
-  </ul>
-</section>
+<h2>🚀 Live Demo</h2>
 
-<section>
-  <h2>🧠 What is RAG?</h2>
-  <div class="box">
-    <p>
-      <strong>RAG (Retrieval-Augmented Generation)</strong> means:
-      <br/>
-      <em>Give the AI your data first, then ask questions.</em>
-    </p>
-    <p>
-      This project injects your data directly into the prompt,
-      forcing the AI to answer only from that context.
-    </p>
-  </div>
-</section>
+<p>
+  🔗 <b>Backend API:</b><br/>
+  <a href="https://machine-learning-ai-rag-basics.onrender.com" target="_blank">
+    https://machine-learning-ai-rag-basics.onrender.com
+  </a>
+</p>
 
-<section>
-  <h2>🏗 Project Structure</h2>
-  <pre>
-Office_Work/
-│── rag.js          # Main RAG logic
-│── data.txt        # Your knowledge base
-│── package.json    # Project config
-│── .gitignore      # Ignored files
-│── README.html     # This file
-  </pre>
-</section>
+<p>
+  🔍 <b>Health Check:</b><br/>
+  <a href="https://machine-learning-ai-rag-basics.onrender.com/health" target="_blank">
+    /health
+  </a>
+</p>
 
-<section>
-  <h2>🚀 Getting Started</h2>
+<hr/>
 
-  <h3>1️⃣ Install Ollama Model</h3>
-  <pre><code>ollama pull dolphin-llama3:8b</code></pre>
+<h2>📌 Project Overview</h2>
 
-  <h3>2️⃣ Install Dependencies</h3>
-  <pre><code>npm install</code></pre>
+<p>
+This project demonstrates a <b>real-world implementation of RAG (Retrieval-Augmented Generation)</b>.
+Users can upload a PDF document and ask natural language questions.  
+The system retrieves relevant information from the PDF and generates accurate answers using an LLM.
+</p>
 
-  <h3>3️⃣ Add Your Data</h3>
-  <pre>
-Company Leave Policy:
-Employees are entitled to 12 paid leaves per year.
-Casual leave is 6 days.
-  </pre>
+<hr/>
 
-  <h3>4️⃣ Run the Project</h3>
-  <pre><code>node rag.js</code></pre>
-</section>
+<h2>🧠 What is RAG?</h2>
 
-<section>
-  <h2>✅ Example Output</h2>
-  <pre>
-Employees are entitled to 12 paid leaves per year.
-Casual leave is 6 days.
-  </pre>
-</section>
+<p>
+<b>Retrieval-Augmented Generation (RAG)</b> combines:
+</p>
 
-<section>
-  <h2>⚙️ How It Works</h2>
-  <pre>
-Your Data (data.txt)
-        ↓
-Context Injection
-        ↓
-Ollama Local LLM
-        ↓
-Accurate Answer
-  </pre>
-</section>
+<ul>
+  <li>📄 Document Retrieval (from PDF)</li>
+  <li>🧠 Large Language Models (LLMs)</li>
+  <li>⚡ Context-aware Answer Generation</li>
+</ul>
 
-<section>
-  <h2>🔐 Privacy</h2>
-  <ul>
-    <li>No cloud APIs</li>
-    <li>No data leaves your machine</li>
-    <li>Fully offline capable</li>
-  </ul>
-</section>
+<p>
+Instead of sending the full document to the model every time,  
+only the <b>most relevant chunks</b> are retrieved and used as context — making responses faster and more accurate.
+</p>
 
-<section>
-  <h2>🛠 Future Improvements</h2>
-  <ul>
-    <li>📄 PDF-based RAG</li>
-    <li>🔍 Chunking & search</li>
-    <li>🌐 Express API</li>
-    <li>⚛️ React frontend</li>
-    <li>🎤 Voice-based Q&A</li>
-  </ul>
-</section>
+<hr/>
 
-<section>
-  <h2>👨‍💻 Author</h2>
-  <div class="box">
-    <p>
-      <strong>Aman Memon</strong><br/>
-      BCA Graduate | MERN Stack Developer | AI Enthusiast
-    </p>
-  </div>
-</section>
+<h2>⚙️ Features</h2>
 
-<footer>
-  <p>
-    ⭐ If you like this project, give it a star on GitHub<br/>
-    Built with clarity, stability, and real-world RAG fundamentals.
-  </p>
-</footer>
+<ul>
+  <li>📤 Upload PDF files</li>
+  <li>✂️ Automatic text chunking</li>
+  <li>🔍 Relevant context selection</li>
+  <li>🤖 AI-powered Q&A using Groq LLM</li>
+  <li>⚡ Fast responses with caching</li>
+  <li>🌐 REST API based architecture</li>
+</ul>
 
-</body>
-</html>
+<hr/>
+
+<h2>🛠 Tech Stack</h2>
+
+<ul>
+  <li><b>Backend:</b> Node.js, Express</li>
+  <li><b>AI Model:</b> Groq (LLaMA 3.3 – 70B)</li>
+  <li><b>PDF Parsing:</b> pdf-parse</li>
+  <li><b>File Upload:</b> Multer</li>
+  <li><b>Caching:</b> Node Cache</li>
+  <li><b>Deployment:</b> Render</li>
+</ul>
+
+<hr/>
+
+<h2>📡 API Endpoints</h2>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <tr>
+    <th>Method</th>
+    <th>Endpoint</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/upload</td>
+    <td>Upload and index a PDF</td>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/ask</td>
+    <td>Ask a question from the uploaded PDF</td>
+  </tr>
+  <tr>
+    <td>GET</td>
+    <td>/health</td>
+    <td>Server health check</td>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/reset</td>
+    <td>Clear uploaded PDF and cache</td>
+  </tr>
+</table>
+
+<hr/>
+
+<h2>📂 Project Architecture</h2>
+
+<pre>
+Frontend (HTML / JS)
+        |
+        v
+Backend API (Express)
+        |
+        v
+PDF Chunking + Retrieval
+        |
+        v
+Groq LLM (Answer Generation)
+</pre>
+
+<hr/>
+
+<h2>🧪 Example Workflow</h2>
+
+<ol>
+  <li>User uploads a PDF</li>
+  <li>PDF text is extracted and chunked</li>
+  <li>User asks a question</li>
+  <li>Relevant chunks are selected</li>
+  <li>LLM generates an answer using only the retrieved context</li>
+</ol>
+
+<hr/>
+
+<h2>🔐 Security Best Practices</h2>
+
+<ul>
+  <li>API keys stored using environment variables</li>
+  <li>.env file excluded using .gitignore</li>
+  <li>No secrets committed to GitHub</li>
+</ul>
+
+<hr/>
+
+<h2>👨‍💻 Author</h2>
+
+<p>
+<b>Mohammad Aman Memon</b><br/>
+Full Stack Developer | MERN | AI & RAG Enthusiast
+</p>
+
+<p>
+🌐 GitHub: 
+<a href="https://github.com/amanComeerciax" target="_blank">
+  github.com/amanComeerciax
+</a>
+</p>
+
+<hr/>
+
+<h2>📈 Future Enhancements</h2>
+
+<ul>
+  <li>Vector database (FAISS / Qdrant)</li>
+  <li>Multi-PDF support</li>
+  <li>User authentication</li>
+  <li>Chat-style UI</li>
+  <li>Streaming responses</li>
+</ul>
+
+<hr/>
+
+<p align="center">
+  ⭐ If you found this project useful, give it a star!
+</p>
