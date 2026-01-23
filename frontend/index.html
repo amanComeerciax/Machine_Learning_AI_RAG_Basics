@@ -1244,6 +1244,13 @@
     </div>
 
     <script>
+        // ✅ API Configuration - Auto-detect environment
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000'
+            : 'https://machine-learning-ai-rag-basics.onrender.com';
+
+        console.log('🌐 API Base URL:', API_BASE_URL);
+
         let pdfUploaded = false;
         let currentMode = 'normal';
 
@@ -1270,7 +1277,7 @@
         // In your HTML, update the server URL check
         async function checkServerHealth() {
             try {
-                const res = await fetch("http://localhost:3000/health");
+                const res = await fetch(`${API_BASE_URL}/health`);
                 const data = await res.json();
 
                 if (data.status === 'ok') {
@@ -1364,7 +1371,7 @@
             }, 200);
 
             try {
-                const res = await fetch("http://localhost:3000/upload", {
+                const res = await fetch(`${API_BASE_URL}/upload`, {
                     method: "POST",
                     body: formData
                 });
@@ -1427,7 +1434,7 @@
             const startTime = Date.now();
 
             try {
-                const res = await fetch("http://localhost:3000/ask", {
+                const res = await fetch(`${API_BASE_URL}/ask`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ question: q })
@@ -1485,7 +1492,7 @@
             const startTime = Date.now();
 
             try {
-                const res = await fetch("http://localhost:3000/ask-stream", {
+                const res = await fetch(`${API_BASE_URL}/ask-stream`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ question: q })
