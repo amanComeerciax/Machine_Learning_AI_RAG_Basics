@@ -8,6 +8,7 @@
 <hr/>
 
 <h2>🚀 Live Demo</h2>
+<img width="2174" height="1968" alt="image" src="https://github.com/user-attachments/assets/5fd6668d-bce1-46c4-990d-8105282fd6ff" />
 
 <p>
   🌐 <b>Frontend (User Interface):</b><br/>
