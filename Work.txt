@@ -41,6 +41,13 @@ Step:4 Generate Response
 Langchain Langgraph Langsmith
 
 
+Vector Database
+Vector Embeddings
+
+
+
+
+
 
 
 

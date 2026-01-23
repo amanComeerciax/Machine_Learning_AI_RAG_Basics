@@ -1,3 +1,12 @@
-Company Leave Policy:
-Employees are entitled to 12 paid leaves per year.
-Casual leave is 6 days.
+Reinforcement learning is a type of machine learning where an agent learns by interacting with an environment.
+It receives rewards or penalties based on its actions.
+The goal is to maximize cumulative reward over time.
+
+Supervised learning uses labeled data to train models.
+Unsupervised learning finds patterns without labels.
+
+React is a frontend JavaScript library.
+It uses components and hooks like useState and useEffect.
+
+
+Aman Is Ai Enginner

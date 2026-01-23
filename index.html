@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glamour PDF - AI Document Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0a0a0f;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Dark Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(147, 51, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+            animation: gradient-shift 15s ease infinite;
+            z-index: 0;
+        }
+
+        @keyframes gradient-shift {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        /* Animated Grid Pattern */
+        .grid-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(147, 51, 234, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(147, 51, 234, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: grid-move 20s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes grid-move {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: linear-gradient(45deg, #a855f7, #ec4899);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-100vh) translateX(100px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        /* Main Container with Glass Effect */
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(15, 15, 25, 0.7);
+            border-radius: 32px;
+            box-shadow:
+                0 8px 32px 0 rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 0 60px rgba(147, 51, 234, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            animation: container-entrance 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes container-entrance {
+            from {
+                opacity: 0;
+                transform: translateY(60px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Gradient Orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float-orb 25s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            top: -200px;
+            right: -200px;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            bottom: -250px;
+            left: -250px;
+            animation-delay: -12s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #ec4899, #f97316);
+            top: 50%;
+            right: -150px;
+            animation-delay: -6s;
+        }
+
+        @keyframes float-orb {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(60px, -60px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-60px, 60px) scale(0.9);
+            }
+        }
+
+        /* Glamorous Header */
+        .header {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%);
+            padding: 50px 40px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            animation: header-shine 4s infinite;
+        }
+
+        @keyframes header-shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow:
+                0 10px 40px rgba(147, 51, 234, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 20px rgba(255, 255, 255, 0.1);
+            animation: logo-float 3s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes logo-float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(135deg, #ffffff, #e0e7ff, #c4b5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(147, 51, 234, 0.5);
+            letter-spacing: -1px;
+            animation: title-glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes title-glow {
+            from {
+                filter: drop-shadow(0 0 20px rgba(147, 51, 234, 0.5));
+            }
+
+            to {
+                filter: drop-shadow(0 0 40px rgba(236, 72, 153, 0.8));
+            }
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+            font-weight: 400;
+            color: #e0e7ff;
+            letter-spacing: 0.5px;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow:
+                0 0 0 4px rgba(16, 185, 129, 0.2),
+                0 0 20px rgba(16, 185, 129, 0.6),
+                0 0 40px rgba(16, 185, 129, 0.3);
+            animation: status-pulse 2s infinite;
+            z-index: 2;
+        }
+
+        @keyframes status-pulse {
+
+            0%,
+            100% {
+                box-shadow:
+                    0 0 0 4px rgba(16, 185, 129, 0.2),
+                    0 0 20px rgba(16, 185, 129, 0.6);
+            }
+
+            50% {
+                box-shadow:
+                    0 0 0 8px rgba(16, 185, 129, 0.1),
+                    0 0 40px rgba(16, 185, 129, 0.9);
+            }
+        }
+
+        .content {
+            padding: 45px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            animation: section-fade 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .section:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .section:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes section-fade {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 2px 15px rgba(147, 51, 234, 0.3);
+        }
+
+        .section-icon {
+            font-size: 30px;
+            filter: drop-shadow(0 0 10px rgba(147, 51, 234, 0.5));
+            animation: icon-pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes icon-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Premium Upload Area */
+        .upload-area {
+            border: 2px dashed rgba(147, 51, 234, 0.4);
+            border-radius: 24px;
+            padding: 50px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            cursor: pointer;
+            background: rgba(147, 51, 234, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(147, 51, 234, 0.2) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+            border-radius: 50%;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(147, 51, 234, 0.8);
+            background: rgba(147, 51, 234, 0.08);
+            transform: scale(1.02);
+            box-shadow:
+                0 10px 50px rgba(147, 51, 234, 0.2),
+                inset 0 0 30px rgba(147, 51, 234, 0.05);
+        }
+
+        .upload-area:hover::before {
+            width: 500px;
+            height: 500px;
+        }
+
+        .upload-area.dragover {
+            border-color: #ec4899;
+            background: rgba(236, 72, 153, 0.1);
+            transform: scale(1.05);
+            box-shadow:
+                0 20px 60px rgba(236, 72, 153, 0.3),
+                inset 0 0 40px rgba(236, 72, 153, 0.1);
+        }
+
+        .upload-icon {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+            box-shadow:
+                0 15px 40px rgba(147, 51, 234, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 30px rgba(255, 255, 255, 0.1);
+            animation: upload-float 4s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes upload-float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(5deg);
+            }
+        }
+
+        .upload-text {
+            font-size: 19px;
+            color: #ffffff;
+            margin-bottom: 12px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-hint {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+
+        #pdf {
+            display: none;
+        }
+
+        /* Dark File Info Card */
+        .file-info {
+            display: none;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            padding: 22px;
+            margin-top: 22px;
+            align-items: center;
+            gap: 18px;
+            backdrop-filter: blur(20px);
+            animation: file-slide 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.1);
+        }
+
+        .file-info.show {
+            display: flex;
+        }
+
+        @keyframes file-slide {
+            from {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .file-icon {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            box-shadow:
+                0 8px 25px rgba(16, 185, 129, 0.4),
+                inset 0 0 20px rgba(255, 255, 255, 0.1);
+            animation: file-pop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes file-pop {
+            0% {
+                transform: scale(0) rotate(-180deg);
+            }
+
+            50% {
+                transform: scale(1.3) rotate(0deg);
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
+        .file-size {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Glamorous Buttons */
+        button {
+            width: 100%;
+            padding: 18px 32px;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            margin-top: 18px;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.7s, height 0.7s;
+        }
+
+        button:hover::before {
+            width: 500px;
+            height: 500px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+            color: white;
+            box-shadow:
+                0 12px 30px rgba(147, 51, 234, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-4px);
+            box-shadow:
+                0 18px 45px rgba(147, 51, 234, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            color: white;
+            border: 2px solid rgba(147, 51, 234, 0.3);
+            box-shadow:
+                0 8px 20px rgba(59, 130, 246, 0.2),
+                inset 0 0 20px rgba(147, 51, 234, 0.05);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+            transform: translateY(-3px);
+            border-color: rgba(147, 51, 234, 0.5);
+        }
+
+        /* Dark Textarea */
+        textarea {
+            width: 100%;
+            min-height: 140px;
+            padding: 20px;
+            border: 2px solid rgba(147, 51, 234, 0.3);
+            border-radius: 16px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: rgba(15, 15, 25, 0.5);
+            color: #ffffff;
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: rgba(147, 51, 234, 0.8);
+            background: rgba(15, 15, 25, 0.7);
+            box-shadow:
+                0 0 0 4px rgba(147, 51, 234, 0.1),
+                0 15px 40px rgba(147, 51, 234, 0.2),
+                inset 0 2px 10px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Dark Answer Box */
+        .answer-box {
+            display: none;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-left: 5px solid #3b82f6;
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 28px;
+            animation: answer-expand 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(20px);
+            box-shadow:
+                0 15px 50px rgba(59, 130, 246, 0.2),
+                inset 0 0 30px rgba(59, 130, 246, 0.05);
+        }
+
+        .answer-box.show {
+            display: block;
+        }
+
+        @keyframes answer-expand {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .answer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .answer-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+        }
+
+        .answer-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+
+        .meta-badge {
+            background: rgba(147, 51, 234, 0.2);
+            padding: 6px 12px;
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            color: #c4b5fd;
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            font-weight: 600;
+        }
+
+        .answer-content {
+            color: #e0e7ff;
+            line-height: 1.9;
+            white-space: pre-wrap;
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        /* Premium Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 35px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner-container {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 25px;
+        }
+
+        .spinner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid rgba(147, 51, 234, 0.1);
+            border-top: 4px solid #9333ea;
+            border-radius: 50%;
+            animation: spinner-rotate 1.2s linear infinite;
+        }
+
+        .spinner-2 {
+            border-top: 4px solid #ec4899;
+            animation-duration: 1.8s;
+            animation-direction: reverse;
+        }
+
+        .spinner-3 {
+            border-top: 4px solid #3b82f6;
+            animation-duration: 2.5s;
+        }
+
+        @keyframes spinner-rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #e0e7ff;
+            font-size: 17px;
+            font-weight: 600;
+            animation: text-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes text-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(147, 51, 234, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 18px;
+            display: none;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-bar.show {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #9333ea, #ec4899, #3b82f6);
+            background-size: 200% 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+            animation: progress-shimmer 2s linear infinite;
+            box-shadow: 0 0 25px rgba(147, 51, 234, 1);
+        }
+
+        @keyframes progress-shimmer {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            100% {
+                background-position: 200% 0%;
+            }
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 15px;
+            backdrop-filter: blur(15px);
+            animation: badge-slide 0.6s ease;
+            letter-spacing: 0.3px;
+        }
+
+        @keyframes badge-slide {
+            from {
+                opacity: 0;
+                transform: translateY(25px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-ready {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+            color: #6ee7b7;
+            border: 2px solid rgba(16, 185, 129, 0.4);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
+        }
+
+        .status-processing {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+            color: #fcd34d;
+            border: 2px solid rgba(251, 191, 36, 0.4);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.2);
+        }
+
+        /* Quick Questions */
+        .quick-questions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .quick-question {
+            padding: 16px 20px;
+            background: rgba(147, 51, 234, 0.05);
+            border: 2px solid rgba(147, 51, 234, 0.2);
+            border-radius: 14px;
+            font-size: 15px;
+            color: #e0e7ff;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-align: left;
+            font-weight: 600;
+            backdrop-filter: blur(15px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-question::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(147, 51, 234, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .quick-question:hover {
+            background: rgba(147, 51, 234, 0.15);
+            border-color: rgba(147, 51, 234, 0.5);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 15px 35px rgba(147, 51, 234, 0.3);
+            color: #ffffff;
+        }
+
+        .quick-question:hover::before {
+            left: 100%;
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            background: rgba(147, 51, 234, 0.05);
+            padding: 8px;
+            border-radius: 16px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 14px 22px;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow:
+                0 8px 25px rgba(147, 51, 234, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .mode-btn:not(.active):hover {
+            background: rgba(147, 51, 234, 0.1);
+            color: #e0e7ff;
+            border-color: rgba(147, 51, 234, 0.3);
+        }
+
+        /* Typing Indicators */
+        .typing-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #c4b5fd;
+            animation: typing-bounce 1.5s infinite;
+            margin-left: 4px;
+            box-shadow: 0 0 10px rgba(196, 181, 253, 0.5);
+        }
+
+        .typing-indicator:nth-child(2) {
+            animation-delay: 0.25s;
+        }
+
+        .typing-indicator:nth-child(3) {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes typing-bounce {
+
+            0%,
+            60%,
+            100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+
+            30% {
+                opacity: 1;
+                transform: translateY(-12px);
+            }
+        }
+
+        /* Divider */
+        .divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(147, 51, 234, 0.3), transparent);
+            margin: 35px 0;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 15, 25, 0.5);
+            border-radius: 12px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            border-radius: 12px;
+            border: 2px solid rgba(15, 15, 25, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #ec4899, #9333ea);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+
+            .content {
+                padding: 35px 25px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .quick-questions {
+                grid-template-columns: 1fr;
+            }
+
+            .mode-toggle {
+                flex-direction: column;
+            }
+
+            .answer-meta {
+                justify-content: flex-start;
+            }
+        }
+
+        /* Tooltip */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            padding: 10px 14px;
+            background: rgba(15, 15, 25, 0.95);
+            color: white;
+            font-size: 13px;
+            border-radius: 8px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-12px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Dark Grid Background -->
+    <div class="grid-background"></div>
+
+    <!-- Animated Particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <!-- Gradient Orbs -->
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+
+        <div class="header">
+            <div class="status-indicator" id="statusIndicator" data-tooltip="Server Status"></div>
+
+            <div class="logo-container">
+                <div class="logo-icon">📄</div>
+            </div>
+
+            <h1>GLAMOUR PDF</h1>
+            <p>✨ Premium AI-Powered Document Intelligence ✨</p>
+        </div>
+
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-icon">📤</span>
+                    Upload Your Document
+                </div>
+
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('pdf').click()">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to upload or drag and drop</div>
+                    <div class="upload-hint">PDF files only • Maximum 10MB</div>
+                </div>
+
+                <input type="file" id="pdf" accept=".pdf" onchange="handleFileSelect(event)" />
+
+                <div class="file-info" id="fileInfo">
+                    <div class="file-icon">📄</div>
+                    <div class="file-details">
+                        <div class="file-name" id="fileName"></div>
+                        <div class="file-size" id="fileSize"></div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" id="uploadBtn" onclick="upload()" disabled>
+                    <span style="position: relative; z-index: 1;">🚀 Upload & Process</span>
+                </button>
+
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div id="uploadStatus"></div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Question Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-icon">💬</span>
+                    Ask Your Question
+                </div>
+
+                <!-- Mode Toggle -->
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="normalMode" onclick="setMode('normal')">
+                        ⚡ Fast Mode
+                    </button>
+                    <button class="mode-btn" id="streamMode" onclick="setMode('stream')">
+                        🌊 Streaming
+                    </button>
+                </div>
+
+                <textarea id="q"
+                    placeholder="Type your question here... (e.g., What is the main topic of this document?)"></textarea>
+
+                <!-- Quick Questions -->
+                <div class="quick-questions" id="quickQuestions" style="display: none;">
+                    <div class="quick-question" onclick="setQuestion('What is this document about?')">
+                        📝 What is this about?
+                    </div>
+                    <div class="quick-question" onclick="setQuestion('Summarize the key points')">
+                        📊 Summarize key points
+                    </div>
+                    <div class="quick-question" onclick="setQuestion('What are the main conclusions?')">
+                        💡 Main conclusions
+                    </div>
+                    <div class="quick-question" onclick="setQuestion('List the important details')">
+                        📋 Important details
+                    </div>
+                </div>
+
+                <button class="btn-primary" id="askBtn" onclick="ask()" disabled>
+                    <span style="position: relative; z-index: 1;">✨ Ask AI</span>
+                </button>
+
+                <button class="btn-secondary" id="clearBtn" onclick="clearAnswer()" style="display: none;">
+                    <span style="position: relative; z-index: 1;">🗑️ Clear</span>
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                        <div class="spinner spinner-2"></div>
+                        <div class="spinner spinner-3"></div>
+                    </div>
+                    <div class="loading-text" id="loadingText">AI is analyzing...</div>
+                </div>
+
+                <div class="answer-box" id="answerBox">
+                    <div class="answer-header">
+                        <div class="answer-title">
+                            <span>✨</span>
+                            <span>AI Response</span>
+                        </div>
+                        <div class="answer-meta" id="answerMeta"></div>
+                    </div>
+                    <div class="answer-content" id="answer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pdfUploaded = false;
+        let currentMode = 'normal';
+
+        // Create Particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 40;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        createParticles();
+
+        // Check server health
+        checkServerHealth();
+
+        // In your HTML, update the server URL check
+        async function checkServerHealth() {
+            try {
+                const res = await fetch("http://localhost:3000/health");
+                const data = await res.json();
+
+                if (data.status === 'ok') {
+                    document.getElementById('statusIndicator').style.background = '#10b981';
+                    document.getElementById('statusIndicator').setAttribute('data-tooltip',
+                        `Server Online • ${data.chunks || 0} chunks loaded`
+                    );
+
+                    if (data.vectorStoreLoaded) {
+                        pdfUploaded = true;
+                        document.getElementById('askBtn').disabled = false;
+                        document.getElementById('quickQuestions').style.display = 'grid';
+                        document.getElementById('uploadStatus').innerHTML =
+                            `<span class="status-badge status-ready">✅ PDF Loaded! ${data.chunks} chunks ready</span>`;
+                    }
+                }
+            } catch (error) {
+                document.getElementById('statusIndicator').style.background = '#ef4444';
+                document.getElementById('statusIndicator').setAttribute('data-tooltip', 'Server Offline');
+                console.error('Server health check failed:', error);
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('normalMode').classList.toggle('active', mode === 'normal');
+            document.getElementById('streamMode').classList.toggle('active', mode === 'stream');
+        }
+
+        // Drag and drop
+        const uploadArea = document.getElementById('uploadArea');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                document.getElementById('pdf').files = files;
+                handleFileSelect({ target: { files: files } });
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('⚠️ File size exceeds 10MB!');
+                    return;
+                }
+
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = `${fileSize} MB`;
+                document.getElementById('fileInfo').classList.add('show');
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        }
+
+        async function upload() {
+            const file = document.getElementById("pdf").files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append("pdf", file);
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadStatus = document.getElementById('uploadStatus');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span style="position: relative; z-index: 1;">⏳ Processing...</span>';
+            uploadStatus.innerHTML = '<span class="status-badge status-processing">⏳ Processing PDF...</span>';
+            progressBar.classList.add('show');
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+            }, 200);
+
+            try {
+                const res = await fetch("http://localhost:3000/upload", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+
+                setTimeout(() => {
+                    progressBar.classList.remove('show');
+                    uploadStatus.innerHTML = `<span class="status-badge status-ready">✅ Ready! ${data.chunks} chunks indexed</span>`;
+                    uploadBtn.innerHTML = '<span style="position: relative; z-index: 1;">✓ Complete</span>';
+                    document.getElementById('askBtn').disabled = false;
+                    document.getElementById('quickQuestions').style.display = 'grid';
+                    pdfUploaded = true;
+
+                    document.getElementById('q').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 500);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                progressBar.classList.remove('show');
+                uploadStatus.innerHTML = '<span class="status-badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 2px solid rgba(239, 68, 68, 0.4);">❌ Failed</span>';
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<span style="position: relative; z-index: 1;">🚀 Upload & Process</span>';
+            }
+        }
+
+        function setQuestion(question) {
+            document.getElementById('q').value = question;
+            document.getElementById('q').focus();
+        }
+
+        async function ask() {
+            if (currentMode === 'stream') {
+                await askStream();
+            } else {
+                await askNormal();
+            }
+        }
+
+        async function askNormal() {
+            const q = document.getElementById("q").value.trim();
+            if (!q) {
+                alert('⚠️ Please enter a question!');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const answerBox = document.getElementById('answerBox');
+            const askBtn = document.getElementById('askBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            answerBox.classList.remove('show');
+            loading.classList.add('show');
+            askBtn.disabled = true;
+            clearBtn.style.display = 'none';
+
+            const startTime = Date.now();
+
+            try {
+                const res = await fetch("http://localhost:3000/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question: q })
+                });
+
+                const data = await res.json();
+                const responseTime = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                loading.classList.remove('show');
+                document.getElementById('answer').textContent = data.answer;
+
+                let metaHTML = `<span class="meta-badge">⚡ ${responseTime}s</span>`;
+                if (data.cached) {
+                    metaHTML += '<span class="meta-badge">💾 Cached</span>';
+                }
+                if (data.sources) {
+                    metaHTML += `<span class="meta-badge">📄 ${data.sources}</span>`;
+                }
+
+                document.getElementById('answerMeta').innerHTML = metaHTML;
+                answerBox.classList.add('show');
+                clearBtn.style.display = 'block';
+
+                answerBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (error) {
+                loading.classList.remove('show');
+                document.getElementById('answer').textContent = '❌ Error: Could not get answer.';
+                document.getElementById('answerMeta').innerHTML = '';
+                answerBox.classList.add('show');
+            } finally {
+                askBtn.disabled = false;
+            }
+        }
+
+        async function askStream() {
+            const q = document.getElementById("q").value.trim();
+            if (!q) {
+                alert('⚠️ Please enter a question!');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const loadingText = document.getElementById('loadingText');
+            const answerBox = document.getElementById('answerBox');
+            const askBtn = document.getElementById('askBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const answerDiv = document.getElementById('answer');
+
+            answerBox.classList.remove('show');
+            loading.classList.add('show');
+            loadingText.innerHTML = 'AI thinking<span class="typing-indicator"></span><span class="typing-indicator"></span><span class="typing-indicator"></span>';
+            askBtn.disabled = true;
+            clearBtn.style.display = 'none';
+
+            const startTime = Date.now();
+
+            try {
+                const res = await fetch("http://localhost:3000/ask-stream", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question: q })
+                });
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+
+                loading.classList.remove('show');
+                answerDiv.textContent = '';
+                answerBox.classList.add('show');
+                document.getElementById('answerMeta').innerHTML = '<span class="meta-badge">🌊 Streaming...</span>';
+
+                let fullResponse = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+
+                                if (data.content) {
+                                    fullResponse += data.content;
+                                    answerDiv.textContent = fullResponse;
+                                    answerBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+
+                                if (data.done) {
+                                    const responseTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                                    document.getElementById('answerMeta').innerHTML =
+                                        `<span class="meta-badge">⚡ ${responseTime}s</span><span class="meta-badge">🌊 Streamed</span>`;
+                                }
+                            } catch (e) { }
+                        }
+                    }
+                }
+
+                clearBtn.style.display = 'block';
+
+            } catch (error) {
+                loading.classList.remove('show');
+                answerDiv.textContent = '❌ Streaming failed.';
+                document.getElementById('answerMeta').innerHTML = '';
+                answerBox.classList.add('show');
+            } finally {
+                askBtn.disabled = false;
+                loadingText.textContent = 'AI is analyzing...';
+            }
+        }
+
+        function clearAnswer() {
+            document.getElementById('answer').textContent = '';
+            document.getElementById('answerBox').classList.remove('show');
+            document.getElementById('clearBtn').style.display = 'none';
+            document.getElementById('q').value = '';
+            document.getElementById('q').focus();
+        }
+
+        document.getElementById('q').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!document.getElementById('askBtn').disabled) {
+                    ask();
+                }
+            }
+        });
+
+        const textarea = document.getElementById('q');
+        textarea.addEventListener('input', () => {
+            localStorage.setItem('lastQuestion', textarea.value);
+        });
+
+        const lastQuestion = localStorage.getItem('lastQuestion');
+        if (lastQuestion) {
+            textarea.value = lastQuestion;
+        }
+    </script>
+
+</body>
+
+</html>
