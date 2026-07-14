@@ -134,7 +134,7 @@ export default function Home() {
                             setConversationHistory([
                                 {
                                     role: "assistant",
-                                    content: `📄 Document "${infoData.metadata.title}" is already loaded (${infoData.chunks} chunks). Ask me anything!`
+                                    content: `📄 Document "${infoData.metadata.title}" is ready. Ask me anything!`
                                 }
                             ]);
                         }
@@ -196,6 +196,28 @@ export default function Home() {
         setSelectedFile(file);
     };
 
+    // Reset System / Change PDF
+    const handleReset = async () => {
+        try {
+            const token = await getToken();
+            const res = await fetch("/api/reset", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setPdfUploaded(false);
+                setPdfMetadata(null);
+                setSelectedFile(null);
+                setConversationHistory([]);
+            } else {
+                const data = await res.json();
+                showError("chat", data.error || "Reset failed");
+            }
+        } catch (err) {
+            showError("chat", err.message);
+        }
+    };
+
     // File Upload
     const uploadFile = async () => {
         if (!selectedFile) return;
@@ -227,7 +249,7 @@ export default function Home() {
             setConversationHistory([
                 {
                     role: "assistant",
-                    content: `✅ Document processed — ${data.chunks} chunks indexed. Ask me anything about it!`
+                    content: `✅ Document processed successfully. Ask me anything about it!`
                 }
             ]);
             
@@ -881,6 +903,30 @@ export default function Home() {
                             </div>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                            {pdfUploaded && (
+                                <button 
+                                    className="btn-change-pdf"
+                                    onClick={handleReset}
+                                    style={{
+                                        background: "rgba(59, 130, 246, 0.15)",
+                                        border: "1px solid rgba(59, 130, 246, 0.3)",
+                                        color: "#3b82f6",
+                                        padding: "6px 14px",
+                                        borderRadius: "20px",
+                                        fontSize: "12px",
+                                        fontWeight: "600",
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                        transition: "all 0.3s"
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.25)"; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)"; }}
+                                >
+                                    🔄 Change Document
+                                </button>
+                            )}
                             <div className={`status-pill ${serverStatus === "Online" ? "online" : "offline"}`}>
                                 <span className="status-dot"></span>
                                 <span>{serverStatus}</span>
