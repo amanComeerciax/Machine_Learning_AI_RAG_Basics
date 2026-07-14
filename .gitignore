@@ -20,3 +20,19 @@ Thumbs.db
 
 # Ollama cache / models (local only)
 .ollama/
+
+# clerk configuration (can include secrets)
+/.clerk/
+
+# Next.js
+.next/
+out/
+build/
+
+# Agents
+.agents/
+skills-lock.json
+
+# Backups
+*_backup/
+*.backup
