@@ -1,10 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { connectDB, UserDocument, DocumentChunk } from "@/lib/db";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-const pdf = require("pdf-parse");
+import pdf from "pdf-parse";
 
 function chunkText(text, chunkSize = 2000) {
     const chunks = [];
