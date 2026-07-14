@@ -349,9 +349,7 @@ export default function Home() {
                             {/* Integrated Floating Navbar */}
                             <nav className="absolute top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl z-50 flex items-center justify-between px-4 py-2 bg-[#0a1628]/60 backdrop-blur-2xl border border-[#3b82f6]/15 rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.4),0_0_40px_rgba(59,130,246,0.08)] ring-1 ring-white/5">
                                 <div className="flex items-center gap-3">
-                                    <div className="bg-[#3b82f6]/20 p-2 rounded-xl border border-[#3b82f6]/30 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                                        <FileText className="w-6 h-6 text-[#3b82f6]" />
-                                    </div>
+                                    <img src="/images/logo.png" alt="Glamour PDF Logo" className="w-9 h-9 object-contain rounded-xl" />
                                     <span className="text-white font-bold text-xl tracking-tight uppercase">Glamour PDF</span>
                                 </div>
                                 <div className="hidden lg:block">
@@ -814,9 +812,7 @@ export default function Home() {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-8 mb-16">
                                 <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="bg-[#3b82f6]/20 p-2 rounded-xl border border-[#3b82f6]/30">
-                                            <FileText className="w-5 h-5 text-[#3b82f6]" />
-                                        </div>
+                                        <img src="/images/logo.png" alt="Glamour PDF Logo" className="w-8 h-8 object-contain rounded-lg" />
                                         <span className="text-white font-bold text-lg tracking-tight uppercase">Glamour PDF</span>
                                     </div>
                                     <p className="text-white/40 text-sm leading-relaxed max-w-xs mt-2">
