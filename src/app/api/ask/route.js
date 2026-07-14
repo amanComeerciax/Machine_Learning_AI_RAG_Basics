@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { connectDB, DocumentChunk } from "@/lib/db";
+import { connectDB, DocumentChunk, UserDocument } from "@/lib/db";
 import { Mistral } from "@mistralai/mistralai";
 
 const mistral = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
@@ -28,13 +28,20 @@ export async function POST(req) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { question, history = [] } = await req.json();
+        const { question, history = [], documentId } = await req.json();
         if (!question) {
             return NextResponse.json({ error: "Question required" }, { status: 400 });
         }
 
         await connectDB();
-        const chunksData = await DocumentChunk.find({ userId });
+        
+        let chunksData = [];
+        if (documentId) {
+            chunksData = await DocumentChunk.find({ documentId });
+        } else {
+            chunksData = await DocumentChunk.find({ userId });
+        }
+        
         const textChunks = chunksData.map(c => c.chunkText);
 
         let context = "";
@@ -61,6 +68,20 @@ export async function POST(req) {
         });
 
         const answer = result.choices[0].message.content;
+
+        // Persist message history in database
+        if (documentId) {
+            await UserDocument.findByIdAndUpdate(documentId, {
+                $push: {
+                    messages: {
+                        $each: [
+                            { role: "user", content: question, timestamp: new Date() },
+                            { role: "assistant", content: answer, timestamp: new Date() }
+                        ]
+                    }
+                }
+            });
+        }
 
         return NextResponse.json({
             answer,

@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { connectDB, DocumentChunk } from "@/lib/db";
+import { connectDB, DocumentChunk, UserDocument } from "@/lib/db";
 import { Mistral } from "@mistralai/mistralai";
 
 const mistral = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
@@ -27,13 +27,20 @@ export async function POST(req) {
             return new Response("Unauthorized", { status: 401 });
         }
 
-        const { question, history = [] } = await req.json();
+        const { question, history = [], documentId } = await req.json();
         if (!question) {
             return new Response("Question required", { status: 400 });
         }
 
         await connectDB();
-        const chunksData = await DocumentChunk.find({ userId });
+        
+        let chunksData = [];
+        if (documentId) {
+            chunksData = await DocumentChunk.find({ documentId });
+        } else {
+            chunksData = await DocumentChunk.find({ userId });
+        }
+        
         const textChunks = chunksData.map(c => c.chunkText);
 
         let context = "";
@@ -62,12 +69,29 @@ export async function POST(req) {
         const stream = new ReadableStream({
             async start(controller) {
                 try {
+                    let fullAnswer = "";
                     for await (const event of result) {
                         const content = event.data?.choices?.[0]?.delta?.content || "";
                         if (content) {
+                            fullAnswer += content;
                             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                         }
                     }
+
+                    // Save the complete conversation to DB
+                    if (documentId && fullAnswer) {
+                        await UserDocument.findByIdAndUpdate(documentId, {
+                            $push: {
+                                messages: {
+                                    $each: [
+                                        { role: "user", content: question, timestamp: new Date() },
+                                        { role: "assistant", content: fullAnswer, timestamp: new Date() }
+                                    ]
+                                }
+                            }
+                        });
+                    }
+
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         done: true,
                         sources: textChunks.length > 0 ? 3 : 0

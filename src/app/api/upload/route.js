@@ -62,17 +62,19 @@ export async function POST(req) {
         }
 
         await connectDB();
-        
-        // Clean up old docs for the user
-        await UserDocument.deleteMany({ userId });
-        await DocumentChunk.deleteMany({ userId });
 
         // Save new doc
         const userDoc = new UserDocument({
             userId,
             title: fileName,
             pages,
-            fileType: fileExtension.toUpperCase()
+            fileType: fileExtension.toUpperCase(),
+            messages: [
+                {
+                    role: "assistant",
+                    content: `📄 Document "${fileName}" is ready. Ask me anything!`
+                }
+            ]
         });
         await userDoc.save();
 
@@ -90,6 +92,7 @@ export async function POST(req) {
 
         return NextResponse.json({
             message: `${fileExtension.toUpperCase()} indexed successfully`,
+            documentId: userDoc._id,
             title: userDoc.title,
             pages: userDoc.pages,
             fileType: userDoc.fileType,

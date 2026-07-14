@@ -40,7 +40,8 @@ const DocumentSchema = new mongoose.Schema({
     title: { type: String, required: true },
     pages: { type: Number, required: true },
     fileType: { type: String, required: true },
-    uploadedAt: { type: Date, default: Date.now }
+    uploadedAt: { type: Date, default: Date.now },
+    messages: { type: Array, default: [] }
 });
 
 const DocumentChunkSchema = new mongoose.Schema({
