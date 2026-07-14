@@ -13,10 +13,10 @@ import { Button } from "@/components/ui/button";
 import { TunnelGrid } from "@/components/ui/3d-tunnel-grid";
 
 const GALLERY_IMAGES = [
-  "/images/gallery_hologram_docs_1783933813924.png",
-  "/images/gallery_ai_network_1783933803973.png",
-  "/images/gallery_data_scanner_1783933825364.png",
-  "/images/gallery_pdf_icon_1783933794541.png",
+    "/images/gallery_hologram_docs_1783933813924.png",
+    "/images/gallery_ai_network_1783933803973.png",
+    "/images/gallery_data_scanner_1783933825364.png",
+    "/images/gallery_pdf_icon_1783933794541.png",
 ];
 
 
@@ -36,7 +36,9 @@ export default function Home() {
     const [pdfUploaded, setPdfUploaded] = useState(false);
     const [pdfMetadata, setPdfMetadata] = useState(null);
     const [inputValue, setInputValue] = useState("");
-    
+    const [documents, setDocuments] = useState([]);
+    const [activeDocumentId, setActiveDocumentId] = useState(null);
+
     const [isUploading, setIsUploading] = useState(false);
     const [isAsking, setIsAsking] = useState(false);
     const [serverStatus, setServerStatus] = useState("Checking...");
@@ -74,13 +76,13 @@ export default function Home() {
                 let suffix = "";
                 if (text.includes("M+")) suffix = "M+";
                 else if (text.includes("k")) suffix = "k";
-                
+
                 const targetNum = parseFloat(text.replace(/[^0-9.]/g, ""));
-                
+
                 if (!isNaN(targetNum)) {
                     // Set initial value to 0 to prevent flashing
                     el.innerText = "0" + suffix;
-                    
+
                     const obj = { val: 0 };
                     gsap.to(obj, {
                         val: targetNum,
@@ -114,30 +116,16 @@ export default function Home() {
     // Check server status and user pdf info
     useEffect(() => {
         if (!isLoaded) return;
-        
+
         async function initWorkspace() {
             try {
                 const res = await fetch("/api/health");
                 const data = await res.json();
                 if (data.status === "ok") {
                     setServerStatus("Online");
-                    
+
                     if (userId) {
-                        const token = await getToken();
-                        const infoRes = await fetch("/api/pdf-info", {
-                            headers: { "Authorization": `Bearer ${token}` }
-                        });
-                        const infoData = await infoRes.json();
-                        if (infoData.loaded) {
-                            setPdfUploaded(true);
-                            setPdfMetadata(infoData.metadata);
-                            setConversationHistory([
-                                {
-                                    role: "assistant",
-                                    content: `📄 Document "${infoData.metadata.title}" is ready. Ask me anything!`
-                                }
-                            ]);
-                        }
+                        await loadUserDocuments();
                     }
                 } else {
                     setServerStatus("Offline");
@@ -187,7 +175,7 @@ export default function Home() {
     };
 
     const [selectedFile, setSelectedFile] = useState(null);
-    
+
     const processFile = (file) => {
         if (file.size > 10 * 1024 * 1024) {
             showError("upload", "⚠️ File size exceeds 10 MB limit");
@@ -196,22 +184,76 @@ export default function Home() {
         setSelectedFile(file);
     };
 
-    // Reset System / Change PDF
-    const handleReset = async () => {
+    // Load documents for current user
+    const loadUserDocuments = async (selectDocId = null) => {
+        try {
+            const token = await getToken();
+            const res = await fetch("/api/documents", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const docs = await res.json();
+                setDocuments(docs);
+                if (docs.length > 0) {
+                    const activeDoc = selectDocId 
+                        ? docs.find(d => d._id === selectDocId) || docs[0]
+                        : docs[0];
+                    setPdfUploaded(true);
+                    setActiveDocumentId(activeDoc._id);
+                    setPdfMetadata({
+                        title: activeDoc.title,
+                        pages: activeDoc.pages,
+                        fileType: activeDoc.fileType
+                    });
+                    setConversationHistory(activeDoc.messages || []);
+                } else {
+                    setPdfUploaded(false);
+                    setActiveDocumentId(null);
+                    setPdfMetadata(null);
+                    setConversationHistory([]);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to load documents:", err);
+        }
+    };
+
+    // Delete a specific document
+    const deleteDocument = async (docId) => {
         try {
             const token = await getToken();
             const res = await fetch("/api/reset", {
                 method: "POST",
-                headers: { "Authorization": `Bearer ${token}` }
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ documentId: docId })
             });
             if (res.ok) {
-                setPdfUploaded(false);
-                setPdfMetadata(null);
-                setSelectedFile(null);
-                setConversationHistory([]);
+                const remainingDocs = documents.filter(d => d._id !== docId);
+                setDocuments(remainingDocs);
+                if (docId === activeDocumentId) {
+                    if (remainingDocs.length > 0) {
+                        setPdfUploaded(true);
+                        const nextDoc = remainingDocs[0];
+                        setActiveDocumentId(nextDoc._id);
+                        setPdfMetadata({
+                            title: nextDoc.title,
+                            pages: nextDoc.pages,
+                            fileType: nextDoc.fileType
+                        });
+                        setConversationHistory(nextDoc.messages || []);
+                    } else {
+                        setPdfUploaded(false);
+                        setActiveDocumentId(null);
+                        setPdfMetadata(null);
+                        setConversationHistory([]);
+                    }
+                }
             } else {
                 const data = await res.json();
-                showError("chat", data.error || "Reset failed");
+                showError("chat", data.error || "Delete failed");
             }
         } catch (err) {
             showError("chat", err.message);
@@ -235,25 +277,12 @@ export default function Home() {
                 headers: { "Authorization": `Bearer ${token}` },
                 body: formData
             });
-            
+
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Upload failed");
 
-            setPdfUploaded(true);
-            setPdfMetadata({
-                title: data.title,
-                pages: data.pages,
-                fileType: data.fileType
-            });
-            
-            setConversationHistory([
-                {
-                    role: "assistant",
-                    content: `✅ Document processed successfully. Ask me anything about it!`
-                }
-            ]);
-            
             setSelectedFile(null);
+            await loadUserDocuments(data.documentId);
         } catch (err) {
             showError("upload", `❌ ${err.message}`);
         } finally {
@@ -287,7 +316,7 @@ export default function Home() {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify({ question: message, history: conversationHistory })
+                body: JSON.stringify({ question: message, history: conversationHistory, documentId: activeDocumentId })
             });
 
             if (!res.ok) {
@@ -351,13 +380,13 @@ export default function Home() {
                     {/* Hero Container with integrated Navbar & Video */}
                     <div className="w-full h-screen">
                         <div className="relative w-full h-full overflow-hidden bg-[#040a15] flex flex-col items-center justify-center shadow-2xl">
-                            
+
                             {/* Background Video */}
-                            <video 
-                                autoPlay 
-                                loop 
-                                muted 
-                                playsInline 
+                            <video
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
                                 className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-100 brightness-110 contrast-105 transition-opacity duration-700"
                                 style={{ imageRendering: 'high-quality' }}
                             >
@@ -391,8 +420,8 @@ export default function Home() {
                             </nav>
 
 
+                        </div>
                     </div>
-                </div>
 
                     {/* Trusted By Logos */}
                     <section className="lp-trusted reveal-el">
@@ -423,9 +452,9 @@ export default function Home() {
                         // Animate each step card
                         el.querySelectorAll('.how-anim-step').forEach((step, i) => {
                             const dir = i % 2 === 0 ? -80 : 80;
-                            gsap.fromTo(step, 
+                            gsap.fromTo(step,
                                 { opacity: 0, x: dir, scale: 0.9 },
-                                { 
+                                {
                                     opacity: 1, x: 0, scale: 1, duration: 1,
                                     scrollTrigger: {
                                         trigger: step,
@@ -468,7 +497,7 @@ export default function Home() {
 
                             {/* Steps Container */}
                             <div className="relative flex flex-col gap-16 md:gap-24">
-                                
+
                                 {/* Connecting Line */}
                                 <div className="how-connect-line hidden md:block absolute left-1/2 top-[80px] bottom-[80px] w-[2px] -translate-x-1/2 origin-top" style={{
                                     background: 'linear-gradient(to bottom, transparent, #3b82f6 20%, #3b82f6 80%, transparent)'
@@ -634,7 +663,7 @@ export default function Home() {
                         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] rounded-full opacity-[0.06] pointer-events-none" style={{
                             background: 'radial-gradient(ellipse, #3b82f6, transparent 70%)'
                         }} />
-                        
+
                         {/* Floating orbs for parallax depth */}
                         <div className="feat-orb absolute top-[10%] left-[8%] w-32 h-32 rounded-full opacity-[0.04] pointer-events-none" style={{ background: 'radial-gradient(circle, #3b82f6, transparent)' }} />
                         <div className="feat-orb absolute top-[60%] right-[5%] w-48 h-48 rounded-full opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, #60a5fa, transparent)' }} />
@@ -645,7 +674,7 @@ export default function Home() {
                             {/* Feature Cards Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="feat-card-anim">
-                                    <GradientCard 
+                                    <GradientCard
                                         title="Mistral AI Powered"
                                         description="Context-aware answers using mistral-small-latest model with RAG pipeline for maximum accuracy."
                                         icon={<Zap size={24} color="#3b82f6" />}
@@ -653,7 +682,7 @@ export default function Home() {
                                     />
                                 </div>
                                 <div className="feat-card-anim">
-                                    <GradientCard 
+                                    <GradientCard
                                         title="User-Scoped Privacy"
                                         description="Every user&apos;s documents are stored in isolated MongoDB collections. Zero data leaks guaranteed."
                                         icon={<Shield size={24} color="#3b82f6" />}
@@ -661,7 +690,7 @@ export default function Home() {
                                     />
                                 </div>
                                 <div className="feat-card-anim">
-                                    <GradientCard 
+                                    <GradientCard
                                         title="Real-Time Streaming"
                                         description="Answers stream character-by-character as they generate. See results instantly with zero wait."
                                         icon={<Activity size={24} color="#3b82f6" />}
@@ -669,7 +698,7 @@ export default function Home() {
                                     />
                                 </div>
                                 <div className="feat-card-anim">
-                                    <GradientCard 
+                                    <GradientCard
                                         title="Multilanguage Support"
                                         description="Ask questions in Hindi, English, Spanish, or any language. The AI understands and responds naturally."
                                         icon={<Globe size={24} color="#3b82f6" />}
@@ -677,7 +706,7 @@ export default function Home() {
                                     />
                                 </div>
                                 <div className="feat-card-anim">
-                                    <GradientCard 
+                                    <GradientCard
                                         title="Smart Chunking"
                                         description="Documents split into optimized chunks for precise context retrieval and accurate responses."
                                         icon={<Layers size={24} color="#3b82f6" />}
@@ -685,7 +714,7 @@ export default function Home() {
                                     />
                                 </div>
                                 <div className="feat-card-anim">
-                                    <GradientCard 
+                                    <GradientCard
                                         title="Clerk Auth Integration"
                                         description="Enterprise-grade authentication with SSO, MFA, and user management built-in from day one."
                                         icon={<Key size={24} color="#3b82f6" />}
@@ -890,175 +919,289 @@ export default function Home() {
             {/* ==================== CHAT WORKSPACE ==================== */}
             <Show when="signed-in">
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px" }}>
-                <div className="app" id="appContainer">
-                    {/* Header */}
-                    <header className="header">
-                        <div className="header-left">
-                            <div className="logo">
-                                <img src="/images/logo.png" alt="Logo" style={{ width: "100%", height: "100%", borderRadius: "10px" }} />
-                            </div>
-                            <div className="brand">
-                                <h1>Glamour PDF</h1>
-                                <span>AI Document Assistant</span>
-                            </div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                            {pdfUploaded && (
-                                <button 
-                                    className="btn-change-pdf"
-                                    onClick={handleReset}
-                                    style={{
-                                        background: "rgba(59, 130, 246, 0.15)",
-                                        border: "1px solid rgba(59, 130, 246, 0.3)",
-                                        color: "#3b82f6",
-                                        padding: "6px 14px",
-                                        borderRadius: "20px",
-                                        fontSize: "12px",
-                                        fontWeight: "600",
-                                        cursor: "pointer",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "6px",
-                                        transition: "all 0.3s"
-                                    }}
-                                    onMouseOver={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.25)"; }}
-                                    onMouseOut={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)"; }}
-                                >
-                                    🔄 Change Document
-                                </button>
-                            )}
-                            <div className={`status-pill ${serverStatus === "Online" ? "online" : "offline"}`}>
-                                <span className="status-dot"></span>
-                                <span>{serverStatus}</span>
-                            </div>
-                            <UserButton afterSignOutUrl="/" />
-                        </div>
-                    </header>
-
-                    {/* Upload section */}
-                    {!pdfUploaded && (
-                        <section className="upload-section">
-                            <div
-                                className="drop-zone"
-                                onClick={() => fileInputRef.current?.click()}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) processFile(f); }}
-                            >
-                                <div className="drop-zone-icon">📤</div>
-                                <div className="drop-zone-title">
-                                    {selectedFile ? selectedFile.name : "Drop your document here or click to browse"}
+                    <div className="app" id="appContainer" style={{ maxWidth: "1120px" }}>
+                        {/* Header */}
+                        <header className="header">
+                            <div className="header-left">
+                                <div className="logo">
+                                    <img src="/images/logo.png" alt="Logo" style={{ width: "100%", height: "100%", borderRadius: "10px" }} />
                                 </div>
-                                <div className="drop-zone-hint">
-                                    {selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : "PDF & TXT files • Max 10 MB"}
+                                <div className="brand">
+                                    <h1>Glamour PDF</h1>
+                                    <span>AI Document Assistant</span>
                                 </div>
                             </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                                {pdfUploaded && (
+                                    <button 
+                                        className="btn-change-pdf"
+                                        onClick={() => {
+                                            setPdfUploaded(false);
+                                            setActiveDocumentId(null);
+                                            setPdfMetadata(null);
+                                            setSelectedFile(null);
+                                            setConversationHistory([]);
+                                        }}
+                                        style={{
+                                            background: "rgba(59, 130, 246, 0.15)",
+                                            border: "1px solid rgba(59, 130, 246, 0.3)",
+                                            color: "#3b82f6",
+                                            padding: "6px 14px",
+                                            borderRadius: "20px",
+                                            fontSize: "12px",
+                                            fontWeight: "600",
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "6px",
+                                            transition: "all 0.3s"
+                                        }}
+                                        onMouseOver={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.25)"; }}
+                                        onMouseOut={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)"; }}
+                                    >
+                                        ➕ New Chat
+                                    </button>
+                                )}
+                                <div className={`status-pill ${serverStatus === "Online" ? "online" : "offline"}`}>
+                                    <span className="status-dot"></span>
+                                    <span>{serverStatus}</span>
+                                </div>
+                                <UserButton afterSignOutUrl="/" />
+                            </div>
+                        </header>
 
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                accept=".pdf,.txt"
-                                style={{ display: "none" }}
-                                onChange={(e) => { const f = e.target.files[0]; if (f) processFile(f); }}
-                            />
+                        {/* Main Body */}
+                        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                            {/* Sidebar */}
+                            <aside className="sidebar-chats" style={{
+                                width: "260px",
+                                borderRight: "1px solid var(--border)",
+                                background: "rgba(10, 15, 35, 0.4)",
+                                display: "flex",
+                                flexDirection: "column",
+                                flexShrink: 0
+                            }}>
+                                <div style={{ padding: "16px", borderBottom: "1px solid var(--border)" }}>
+                                    <button
+                                        onClick={() => {
+                                            setPdfUploaded(false);
+                                            setActiveDocumentId(null);
+                                            setPdfMetadata(null);
+                                            setSelectedFile(null);
+                                            setConversationHistory([]);
+                                        }}
+                                        style={{
+                                            width: "100%",
+                                            padding: "10px",
+                                            background: "rgba(59, 130, 246, 0.1)",
+                                            border: "1px dashed rgba(59, 130, 246, 0.3)",
+                                            borderRadius: "12px",
+                                            color: "#3b82f6",
+                                            fontWeight: "600",
+                                            fontSize: "13px",
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: "8px",
+                                            transition: "all 0.2s"
+                                        }}
+                                        onMouseOver={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)"; }}
+                                        onMouseOut={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)"; }}
+                                    >
+                                        ➕ New Chat
+                                    </button>
+                                </div>
+                                <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                                    {documents.map((doc) => {
+                                        const isActive = doc._id === activeDocumentId;
+                                        return (
+                                            <div
+                                                key={doc._id}
+                                                onClick={() => {
+                                                    setPdfUploaded(true);
+                                                    setActiveDocumentId(doc._id);
+                                                    setPdfMetadata({ title: doc.title, pages: doc.pages, fileType: doc.fileType });
+                                                    setConversationHistory(doc.messages || []);
+                                                }}
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "space-between",
+                                                    padding: "10px 12px",
+                                                    borderRadius: "10px",
+                                                    background: isActive ? "rgba(59, 130, 246, 0.15)" : "transparent",
+                                                    border: isActive ? "1px solid rgba(59, 130, 246, 0.2)" : "1px solid transparent",
+                                                    color: isActive ? "white" : "rgba(255,255,255,0.6)",
+                                                    cursor: "pointer",
+                                                    fontSize: "13px",
+                                                    transition: "all 0.2s"
+                                                }}
+                                                onMouseOver={(e) => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+                                                onMouseOut={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+                                            >
+                                                <span style={{
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    whiteSpace: "nowrap",
+                                                    flex: 1,
+                                                    marginRight: "8px"
+                                                }}>
+                                                    📄 {doc.title}
+                                                </span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteDocument(doc._id);
+                                                    }}
+                                                    style={{
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        color: "rgba(255,255,255,0.3)",
+                                                        cursor: "pointer",
+                                                        fontSize: "12px",
+                                                        padding: "2px 6px"
+                                                    }}
+                                                    onMouseOver={(e) => { e.currentTarget.style.color = "#ef4444"; }}
+                                                    onMouseOut={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </aside>
 
-                            {activeError && errorTarget === "upload" && (
-                                <div className="error-toast visible" style={{ marginTop: "12px" }}>{activeError}</div>
-                            )}
+                            {/* Content Panel */}
+                            <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", position: "relative" }}>
+                                {!pdfUploaded ? (
+                                    <section className="upload-section">
+                                        <div
+                                            className="drop-zone"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) processFile(f); }}
+                                        >
+                                            <div className="drop-zone-icon">📤</div>
+                                            <div className="drop-zone-title">
+                                                {selectedFile ? selectedFile.name : "Drop your document here or click to browse"}
+                                            </div>
+                                            <div className="drop-zone-hint">
+                                                {selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : "PDF & TXT files • Max 10 MB"}
+                                            </div>
+                                        </div>
 
-                            <button
-                                className="btn-upload"
-                                onClick={uploadFile}
-                                disabled={!selectedFile || isUploading}
-                            >
-                                {isUploading ? (
-                                    <><div className="spinner"></div> Processing…</>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            accept=".pdf,.txt"
+                                            style={{ display: "none" }}
+                                            onChange={(e) => { const f = e.target.files[0]; if (f) processFile(f); }}
+                                        />
+
+                                        {activeError && errorTarget === "upload" && (
+                                            <div className="error-toast visible" style={{ marginTop: "12px" }}>{activeError}</div>
+                                        )}
+
+                                        <button
+                                            className="btn-upload"
+                                            onClick={uploadFile}
+                                            disabled={!selectedFile || isUploading}
+                                        >
+                                            {isUploading ? (
+                                                <><div className="spinner"></div> Processing…</>
+                                            ) : (
+                                                "🚀 Upload & Process Document"
+                                            )}
+                                        </button>
+                                    </section>
                                 ) : (
-                                    "🚀 Upload & Process Document"
+                                    <>
+                                        {/* Chat Area */}
+                                        <div className="chat-area">
+                                            {conversationHistory.length === 0 ? (
+                                                <div className="welcome">
+                                                    <div className="welcome-emoji">🤖</div>
+                                                    <h2>Welcome to Glamour PDF</h2>
+                                                    <p>Upload a document and ask questions — I&apos;ll find the answers using AI.</p>
+                                                </div>
+                                            ) : (
+                                                conversationHistory.map((msg, index) => (
+                                                    <div key={index} className={`msg ${msg.role}`}>
+                                                        <div className="msg-avatar">{msg.role === "user" ? "👤" : "🤖"}</div>
+                                                        <div className="msg-body">
+                                                            <div className="msg-bubble" dangerouslySetInnerHTML={{
+                                                                __html: msg.content.replace(/\n/g, "<br />")
+                                                            }}></div>
+                                                            <div className="msg-time">
+                                                                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+
+                                            {isAsking && (
+                                                <div className="msg assistant">
+                                                    <div className="msg-avatar">🤖</div>
+                                                    <div className="msg-body">
+                                                        <div className="msg-bubble">
+                                                            <div className="typing-dots">
+                                                                <span></span><span></span><span></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div ref={chatEndRef} />
+                                        </div>
+
+                                        {/* Quick actions */}
+                                        {conversationHistory.length <= 1 && (
+                                            <div style={{ display: "flex", justifyContent: "center", paddingBottom: "10px" }}>
+                                                <div className="quick-actions">
+                                                    <button className="quick-action" onClick={() => setQuestion("Summarize this document")}>📝 Summarize</button>
+                                                    <button className="quick-action" onClick={() => setQuestion("What are the key points?")}>🔑 Key points</button>
+                                                    <button className="quick-action" onClick={() => setQuestion("What is the main topic?")}>💡 Main topic</button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Input bar */}
+                                        <div className="input-section">
+                                            {activeError && errorTarget === "chat" && (
+                                                <div className="error-toast visible">{activeError}</div>
+                                            )}
+                                            <div className="input-row">
+                                                <div className="input-wrap">
+                                                    <textarea
+                                                        ref={textareaRef}
+                                                        value={inputValue}
+                                                        onChange={handleInput}
+                                                        onKeyDown={handleKeyDown}
+                                                        placeholder="Ask me anything about your document..."
+                                                        rows={1}
+                                                        disabled={isAsking}
+                                                    />
+                                                    {inputValue && (
+                                                        <button className="clear-input visible" onClick={() => setInputValue("")}>×</button>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    className="btn-send"
+                                                    onClick={sendMessage}
+                                                    disabled={!inputValue.trim() || isAsking}
+                                                    title="Send message"
+                                                >➤</button>
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
-                            </button>
-                        </section>
-                    )}
-
-                    {/* Chat Area */}
-                    <div className="chat-area">
-                        {conversationHistory.length === 0 ? (
-                            <div className="welcome">
-                                <div className="welcome-emoji">🤖</div>
-                                <h2>Welcome to Glamour PDF</h2>
-                                <p>Upload a document and ask questions — I&apos;ll find the answers using AI.</p>
-                            </div>
-                        ) : (
-                            conversationHistory.map((msg, index) => (
-                                <div key={index} className={`msg ${msg.role}`}>
-                                    <div className="msg-avatar">{msg.role === "user" ? "👤" : "🤖"}</div>
-                                    <div className="msg-body">
-                                        <div className="msg-bubble" dangerouslySetInnerHTML={{
-                                            __html: msg.content.replace(/\n/g, "<br />")
-                                        }}></div>
-                                        <div className="msg-time">
-                                            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-
-                        {isAsking && (
-                            <div className="msg assistant">
-                                <div className="msg-avatar">🤖</div>
-                                <div className="msg-body">
-                                    <div className="msg-bubble">
-                                        <div className="typing-dots">
-                                            <span></span><span></span><span></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        <div ref={chatEndRef} />
-                    </div>
-
-                    {/* Quick actions */}
-                    {pdfUploaded && conversationHistory.length <= 1 && (
-                        <div style={{ display: "flex", justifyContent: "center", paddingBottom: "10px" }}>
-                            <div className="quick-actions">
-                                <button className="quick-action" onClick={() => setQuestion("Summarize this document")}>📝 Summarize</button>
-                                <button className="quick-action" onClick={() => setQuestion("What are the key points?")}>🔑 Key points</button>
-                                <button className="quick-action" onClick={() => setQuestion("What is the main topic?")}>💡 Main topic</button>
                             </div>
                         </div>
-                    )}
-
-                    {/* Input bar */}
-                    <div className="input-section">
-                        {activeError && errorTarget === "chat" && (
-                            <div className="error-toast visible">{activeError}</div>
-                        )}
-                        <div className="input-row">
-                            <div className="input-wrap">
-                                <textarea
-                                    ref={textareaRef}
-                                    value={inputValue}
-                                    onChange={handleInput}
-                                    onKeyDown={handleKeyDown}
-                                    placeholder="Ask me anything about your document..."
-                                    rows={1}
-                                    disabled={!pdfUploaded || isAsking}
-                                />
-                                {inputValue && (
-                                    <button className="clear-input visible" onClick={() => setInputValue("")}>×</button>
-                                )}
-                            </div>
-                            <button
-                                className="btn-send"
-                                onClick={sendMessage}
-                                disabled={!inputValue.trim() || isAsking || !pdfUploaded}
-                                title="Send message"
-                            >➤</button>
-                        </div>
                     </div>
-                </div>
                 </div>
             </Show>
         </>
