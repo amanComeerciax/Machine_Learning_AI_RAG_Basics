@@ -390,7 +390,7 @@ export default function Home() {
                                 className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-100 brightness-110 contrast-105 transition-opacity duration-700"
                                 style={{ imageRendering: 'high-quality' }}
                             >
-                                <source src="/videos/hero-bg.mp4?v=2" type="video/mp4" />
+                                <source src="/videos/herorobor.mp4" type="video/mp4" />
                             </video>
 
                             {/* Lighter Overlay to hide artifacts but keep brightness */}
