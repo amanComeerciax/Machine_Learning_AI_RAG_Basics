@@ -256,7 +256,7 @@ function Room({
         </div>
       </div>
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 20,
           background: `radial-gradient(ellipse 90% 80% at 50% 45%,
@@ -349,7 +349,7 @@ export const VolumetricStudio = ({
         spots={[35, 50, 65]}
         isFlickering={isFlickering}
       />
-      <div className="relative z-10 w-full h-full pointer-events-none">
+      <div className="relative z-30 w-full h-full pointer-events-none">
         {children}
       </div>
     </section>

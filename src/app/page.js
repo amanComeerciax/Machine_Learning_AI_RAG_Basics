@@ -11,6 +11,7 @@ import dynamic from "next/dynamic";
 import { ContainerAnimated, ContainerStagger, GalleryGrid, GalleryGridCell } from "@/components/ui/cta-section-with-gallery";
 import { Button } from "@/components/ui/button";
 import { TunnelGrid } from "@/components/ui/3d-tunnel-grid";
+import SpadeHero from "@/components/ui/spade-hero";
 
 const GALLERY_IMAGES = [
     "/images/gallery_hologram_docs_1783933813924.png",
@@ -374,66 +375,22 @@ export default function Home() {
 
     return (
         <>
-            {/* ==================== LANDING PAGE ==================== */}
             <Show when="signed-out">
-                <div className="landing-page bg-[#040a15] text-white" ref={landingRef}>
-                    {/* Hero Container with integrated Navbar & Video */}
-                    <div className="w-full h-screen">
-                        <div className="relative w-full h-full overflow-hidden bg-[#040a15] flex flex-col items-center justify-center shadow-2xl">
-
-                            {/* Background Video */}
-                            <video
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                                className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-100 brightness-110 contrast-105 transition-opacity duration-700"
-                                style={{ imageRendering: 'high-quality' }}
-                            >
-                                <source src="/videos/herorobor.mp4" type="video/mp4" />
-                            </video>
-
-                            {/* Lighter Overlay to hide artifacts but keep brightness */}
-                            <div className="absolute inset-0 z-0 bg-[#3b82f6]/10 mix-blend-overlay pointer-events-none" />
-                            <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0a1628]/10 via-transparent to-[#040a15] pointer-events-none" />
-
-                            {/* Integrated Floating Navbar */}
-                            <nav className="absolute top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl z-50 flex items-center justify-between px-4 py-2 bg-[#0a1628]/60 backdrop-blur-2xl border border-[#3b82f6]/15 rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.4),0_0_40px_rgba(59,130,246,0.08)] ring-1 ring-white/5">
-                                <div className="flex items-center gap-3">
-                                    <img src="/images/logo.png" alt="Glamour PDF Logo" className="w-9 h-9 object-contain rounded-xl" />
-                                    <span className="text-white font-bold text-xl tracking-tight uppercase">Glamour PDF</span>
-                                </div>
-                                <div className="hidden lg:block">
-                                    <AppleGlassNav items={[
-                                        { name: "Home", href: "#" },
-                                        { name: "How It Works", href: "#lp-how" },
-                                        { name: "Features", href: "#lp-features" },
-                                        { name: "Pricing", href: "#lp-pricing" }
-                                    ]} />
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <button className="text-sm font-medium text-white/80 hover:text-white hidden sm:block" onClick={() => setShowAuthModal(true)}>Log in</button>
-                                    <button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-bold px-6 py-2.5 rounded-full shadow-[0_4px_14px_rgba(59,130,246,0.4)] transition-all transform hover:-translate-y-0.5" onClick={() => setShowAuthModal(true)}>
-                                        Sign Up
-                                    </button>
-                                </div>
-                            </nav>
-
-
-                        </div>
+                <div className="landing-page bg-[#040a15] text-white relative" ref={landingRef}>
+                    {/* Premium Background Effects */}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                        {/* Subtle Grid */}
+                        <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '64px 64px', maskImage: 'linear-gradient(to bottom, black 20%, transparent 95%)', WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 95%)' }} />
+                        
+                        {/* Glowing Ambient Orbs */}
+                        <div className="absolute top-[1000px] left-[-20%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] rounded-full bg-[#3b82f6] opacity-[0.07] blur-[120px]" />
+                        <div className="absolute top-[2500px] right-[-20%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] rounded-full bg-[#8b5cf6] opacity-[0.07] blur-[120px]" />
+                        <div className="absolute bottom-[1000px] left-[10%] w-[50vw] h-[50vw] max-w-[800px] max-h-[800px] rounded-full bg-[#3b82f6] opacity-[0.05] blur-[150px]" />
                     </div>
 
-                    {/* Trusted By Logos */}
-                    <section className="lp-trusted reveal-el">
-                        <p className="lp-trusted-label">Trusted by leading teams worldwide</p>
-                        <div className="lp-trusted-logos">
-                            <span className="lp-trusted-logo">◆ TechCorp</span>
-                            <span className="lp-trusted-logo">● DataFlow</span>
-                            <span className="lp-trusted-logo">▲ CloudNine</span>
-                            <span className="lp-trusted-logo">■ InnoLabs</span>
-                            <span className="lp-trusted-logo">★ NexusAI</span>
-                        </div>
-                    </section>
+                    <div className="relative z-10">
+                        <SpadeHero onSignUp={() => setShowAuthModal(true)} />
+                    </div>
 
                     {/* How It Works - Animated Steps */}
                     <section className="relative w-full pt-16 pb-24 overflow-hidden" id="lp-how" ref={(el) => {
@@ -593,7 +550,7 @@ export default function Home() {
                     </section>
 
                     {/* Scale With AI - Gallery CTA */}
-                    <section className="relative w-full py-24 bg-[#0a1628]/30 border-y border-[#3b82f6]/10">
+                    <section className="relative w-full py-24 bg-transparent">
                         <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-12 px-6 md:px-10 md:grid-cols-2">
                             <ContainerStagger>
                                 <ContainerAnimated className="inline-block mb-4 px-4 py-1.5 rounded-full border border-[#3b82f6]/30 bg-[#3b82f6]/10 text-[#3b82f6] text-xs font-semibold tracking-wide uppercase">
@@ -816,7 +773,7 @@ export default function Home() {
                     </section>
 
                     {/* CTA Banner - Volumetric Studio */}
-                    <section className="w-full relative h-[100vh] min-h-[600px] overflow-hidden mt-12 mb-0">
+                    <section className="w-full relative h-[100vh] min-h-[600px] overflow-hidden mt-12 mb-0" style={{ maskImage: 'linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)', WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)' }}>
                         <div className="absolute inset-0 w-full h-full reveal-el">
                             <VolumetricStudio className="w-full h-full">
                                 <div className="flex flex-col items-center justify-center w-full h-full text-center px-6 relative z-10 pointer-events-none">
@@ -836,7 +793,7 @@ export default function Home() {
                                     >
                                         Upload any PDF, ask questions in any language, and get instant AI-powered answers. Experience the future of document analysis with Glamour PDF.
                                     </p>
-                                    <div className="flex flex-col sm:flex-row gap-4 pointer-events-auto">
+                                    <div className="flex flex-col sm:flex-row gap-4 pointer-events-auto relative z-50">
                                         <button
                                             className="px-8 py-4 font-bold transition-transform hover:scale-105 active:scale-95 bg-[#3b82f6] text-white rounded-full shadow-[0_0_30px_rgba(59,130,246,0.4)] text-lg"
                                             onClick={() => setShowAuthModal(true)}
@@ -858,7 +815,7 @@ export default function Home() {
                     </section>
 
                     {/* Footer */}
-                    <footer className="w-full border-t border-white/5 bg-[#040a15] pt-16 pb-8">
+                    <footer className="w-full bg-transparent pt-16 pb-8">
                         <div className="max-w-[1440px] mx-auto px-6 md:px-10">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-8 mb-16">
                                 <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
@@ -889,7 +846,7 @@ export default function Home() {
                                     <a href="#" className="text-white/50 hover:text-white text-sm transition-colors">Security</a>
                                 </div>
                             </div>
-                            <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
                                 <p className="text-white/40 text-sm">
                                     © {new Date().getFullYear()} Glamour PDF. All rights reserved.
                                 </p>
@@ -918,8 +875,8 @@ export default function Home() {
 
             {/* ==================== CHAT WORKSPACE ==================== */}
             <Show when="signed-in">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px" }}>
-                    <div className="app" id="appContainer" style={{ maxWidth: "1120px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", width: "100%" }}>
+                    <div className="app" id="appContainer" style={{ width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", borderRadius: "0", border: "none" }}>
                         {/* Header */}
                         <header className="header">
                             <div className="header-left">
@@ -959,7 +916,7 @@ export default function Home() {
                                         onMouseOver={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.25)"; }}
                                         onMouseOut={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)"; }}
                                     >
-                                        ➕ New Chat
+                                        ➕ Upload PDF
                                     </button>
                                 )}
                                 <div className={`status-pill ${serverStatus === "Online" ? "online" : "offline"}`}>
@@ -1009,7 +966,7 @@ export default function Home() {
                                         onMouseOver={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)"; }}
                                         onMouseOut={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)"; }}
                                     >
-                                        ➕ New Chat
+                                        ➕ Upload PDF
                                     </button>
                                 </div>
                                 <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>

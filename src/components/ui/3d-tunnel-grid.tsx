@@ -40,7 +40,7 @@ export function TunnelGrid({ images, className }: { images: string[], className?
   }, [images]);
 
   return (
-    <div className={cn("relative h-screen min-h-[700px] w-full overflow-hidden bg-[#040a15] flex items-center justify-center border-y border-[#3b82f6]/10", className)} style={{ perspective: "800px" }}>
+    <div className={cn("relative h-screen min-h-[700px] w-full overflow-hidden bg-transparent flex items-center justify-center", className)} style={{ perspective: "800px" }}>
         
         {/* Center Title */}
         <div className="absolute inset-0 flex flex-col items-center justify-center z-50 pointer-events-none">
